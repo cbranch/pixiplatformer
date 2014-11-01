@@ -1,0 +1,21 @@
+{
+  "name": "pixiplatformer",
+  "version": "0.0.0",
+  "homepage": "https://github.com/cbranch/pixiplatformer",
+  "authors": [
+    "Chris Branch <chris@chrisbranch.co.uk>"
+  ],
+  "description": "platform game using pixi.js",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "pixi.js": "GoodBoyDigital/pixi.js#~2.0.0"
+  }
+}

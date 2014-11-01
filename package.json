@@ -1,0 +1,23 @@
+{
+  "name": "pixiplatformer",
+  "version": "0.0.0",
+  "description": "platform game using pixi.js",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbranch/pixiplatformer.git"
+  },
+  "author": "Chris Branch",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cbranch/pixiplatformer/issues"
+  },
+  "homepage": "https://github.com/cbranch/pixiplatformer",
+  "devDependencies": {
+    "bower": "^1.3.12",
+    "grunt": "^0.4.5"
+  }
+}
