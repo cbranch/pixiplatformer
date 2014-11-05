@@ -16,6 +16,7 @@
     "tests"
   ],
   "dependencies": {
-    "pixi.js": "GoodBoyDigital/pixi.js#~2.0.0"
+    "pixi.js": "GoodBoyDigital/pixi.js#~2.0.0",
+    "stats.js": "mrdoob/stats.js"
   }
 }
