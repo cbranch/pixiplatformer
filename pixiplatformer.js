@@ -46,7 +46,7 @@ function setupStage(stage) {
   stage.addChild(dirtFloor);
 }
 
-function startAnimation(stage, renderer) {
+function startAnimation(stage, renderer, stats) {
   var previousTimestamp = 0;
   var physicsTimestamp = 0;
   var physicsDuration = 1000 / 120; // 120fps
@@ -55,11 +55,13 @@ function startAnimation(stage, renderer) {
     renderer.render(stage);
   }
   function animate(currentTimestamp) {
+    stats.begin();
     while (currentTimestamp > physicsTimestamp) {
       physicsTimestamp += physicsDuration;
       updatePhysics(physicsDuration);
     }
     updateDisplay(physicsTimestamp - currentTimestamp);
+    stats.end();
     if (gameActive) {
       requestAnimFrame(animate);
     }
@@ -74,14 +76,21 @@ function startAnimation(stage, renderer) {
 }
 
 function main() {
+  var containerElement = document.getElementById(containerElementId);
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(backgroundColor);
   // create a renderer instance.
   var renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
+  // FPS stats
+  var stats = new Stats();
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.right = '0px';
+  stats.domElement.style.bottom = '0px';
+  containerElement.appendChild(stats.domElement);
   // add the renderer view element to the DOM
-  document.getElementById(containerElementId).appendChild(renderer.view);
+  containerElement.appendChild(renderer.view);
   setupStage(stage);
-  startAnimation(stage, renderer);
+  startAnimation(stage, renderer, stats);
 }
 
 window.onload = main;
