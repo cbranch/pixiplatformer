@@ -2,6 +2,8 @@ body {
   margin: 0;
   padding: 0;
   background-color: #000000;
+  color: #EEEEEE;
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
 }
 #game {
   width: 1000px;
@@ -12,4 +14,11 @@ body {
   left: 0;
   right: 0;
   margin: auto;
+}
+.float-footer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 8px;
+  background-color: #000000;
 }
