@@ -6,16 +6,7 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
 
   var gameActive = true;
   var debugDrawActive = false;
-  var animatableObjects = [];
-  var physicsObjects = [];
   var debugGraphics = new PIXI.Graphics();
-
-  function updatePhysics(world, dt) {
-    world.Step(dt / 1000, 3, 2);
-    physicsObjects.map(function(x) {
-      x.physics(dt);
-    });
-  }
 
   function Character(world) {
     var self = this;
@@ -89,8 +80,8 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
   function setupStage(globalState, stage, world) {
     var character = new Character(world);
     stage.addChild(character.sprite);
-    animatableObjects.push(character);
-    physicsObjects.push(character);
+    globalState.animatableObjects.push(character);
+    globalState.physicsObjects.push(character);
     globalState.character = character;
     globalState.keyPressHandlers[KEY_SPACE] = function(down) { handleJumpInput(globalState, down); };
 
@@ -104,8 +95,8 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
           y: 600 - 32
         });
     stage.addChild(dirtFloor.sprite);
-    physicsObjects.push(dirtFloor);
-    animatableObjects.push(dirtFloor);
+    globalState.physicsObjects.push(dirtFloor);
+    globalState.animatableObjects.push(dirtFloor);
   }
 
   // User input handling
@@ -155,12 +146,6 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     keyPressesSinceLastFrame.push([code, false]);
   }
 
-  var keyCommandSpace = function() {};
-  var keyCommandLeft = function() {};
-  var keyCommandUp = function() {};
-  var keyCommandRight = function() {};
-  var keyCommandDown = function() {};
-
   function processInput(globalState) {
     var keyPresses = keyPressesSinceLastFrame;
     keyPressesSinceLastFrame = [];
@@ -174,38 +159,41 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     window.onkeyup = handleKeyCode(keyUp);
   }
 
-  function startAnimation(globalState, stage, world, renderer, stats) {
-    var previousTimestamp = 0;
+  function gameLoop(globalState, stage, world, renderer, stats) {
     var physicsTimestamp = 0;
     var physicsDuration = 1000 / 120; // 120fps
-    function updateDisplay(world, dt) {
-      animatableObjects.map(function(x) { x.animate(dt); });
+    function updatePhysics(dt) {
+      world.Step(dt / 1000, 3, 2);
+      globalState.physicsObjects.map(function(x) {
+        x.physics(dt);
+      });
+    }
+    function updateDisplay(dt) {
+      globalState.animatableObjects.map(function(x) { x.animate(dt); });
       debugGraphics.clear();
       if (debugDrawActive) {
         world.DrawDebugData();
       }
       renderer.render(stage);
     }
-    function animate(currentTimestamp) {
+    function tick(currentTimestamp) {
       stats.begin();
       processInput(globalState);
       while (currentTimestamp > physicsTimestamp) {
         physicsTimestamp += physicsDuration;
-        updatePhysics(world, physicsDuration);
+        updatePhysics(physicsDuration);
       }
-      updateDisplay(world, physicsTimestamp - currentTimestamp);
+      updateDisplay(physicsTimestamp - currentTimestamp);
       stats.end();
       if (gameActive) {
-        requestAnimFrame(animate);
+        requestAnimFrame(tick);
       }
     }
-    // Avoid skipping ahead in the animation too soon due to initialisation delays
-    function initialFrame(currentTimestamp) {
-      previousTimestamp = currentTimestamp;
+    function captureFirstTimestamp(currentTimestamp) {
       physicsTimestamp = currentTimestamp;
-      requestAnimFrame(animate);
+      tick();
     }
-    requestAnimFrame(initialFrame);
+    requestAnimFrame(captureFirstTimestamp);
   }
 
   function updateDebugDrawState() {
@@ -216,6 +204,8 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     var globalState = {
       character: null,
       keyPressHandlers: [],
+      animatableObjects: [],
+      physicsObjects: [],
     };
     var containerElement = document.getElementById(containerElementId);
     // create an new instance of a pixi stage
@@ -246,7 +236,7 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     containerElement.appendChild(renderer.view);
     setupInput();
     setupStage(globalState, stage, world);
-    startAnimation(globalState, stage, world, renderer, stats);
+    gameLoop(globalState, stage, world, renderer, stats);
   }
 
   return function () {
