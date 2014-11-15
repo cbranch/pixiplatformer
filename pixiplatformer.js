@@ -27,6 +27,7 @@ function Character(world) {
   var bodyDef = new Box2D.b2BodyDef();
   bodyDef.set_type(Box2D.b2_dynamicBody);
   bodyDef.set_position(new Box2D.b2Vec2(5, 0));
+  bodyDef.set_fixedRotation(true);
   self.body = world.CreateBody(bodyDef);
   var shapeDef = new Box2D.b2PolygonShape();
   shapeDef.SetAsBox(0.335, 0.825);
@@ -36,14 +37,17 @@ function Character(world) {
   fixtureDef.set_density(1.0);
   self.body.CreateFixture(shapeDef, 1.0);
 
-  // Simple animation to demonstrate the concept for now...
-  self.easeCurve = 0;
   self.physics = function(dt) {
   };
   self.animate = function(dt) {
     var pos = self.body.GetPosition();
     self.sprite.position.set(pos.get_x() * 100, pos.get_y() * 100);
     self.sprite.rotation = self.body.GetAngle();
+  };
+  self.tryToJump = function() {
+    // TODO Should only jump if we're on the ground
+    // TODO Should continue to apply force for a short time unless we let go of jump
+    self.body.ApplyLinearImpulse(new Box2D.b2Vec2(0, -6), self.body.GetWorldCenter());
   };
 }
 
@@ -73,11 +77,21 @@ function StaticObject(world, o) {
   };
 }
 
-function setupStage(stage, world) {
+function handleJumpInput(globalState, down) {
+  if (down) {
+    if (globalState.character) {
+      globalState.character.tryToJump();
+    }
+  }
+}
+
+function setupStage(globalState, stage, world) {
   var character = new Character(world);
   stage.addChild(character.sprite);
   animatableObjects.push(character);
   physicsObjects.push(character);
+  globalState.character = character;
+  globalState.keyPressHandlers[KEY_SPACE] = function(down) { handleJumpInput(globalState, down); };
 
   // TODO define level...
   var dirtFloor = new StaticObject(world,
@@ -93,7 +107,73 @@ function setupStage(stage, world) {
   animatableObjects.push(dirtFloor);
 }
 
-function startAnimation(stage, world, renderer, stats) {
+// User input handling
+var keyPressesSinceLastFrame = [];
+
+var KEY_SPACE = 0;
+var KEY_LEFT = 1;
+var KEY_UP = 2;
+var KEY_RIGHT = 3;
+var KEY_DOWN = 4;
+
+function mapKeyCodeToLogicalCode(code) {
+  switch (code) {
+    case 32:
+      return KEY_SPACE;
+    case 37:
+      return KEY_LEFT;
+    case 38:
+      return KEY_UP;
+    case 39:
+      return KEY_RIGHT;
+    case 40:
+      return KEY_DOWN;
+    default:
+      return undefined;
+  }
+}
+
+function handleKeyCode(f) {
+  return function(e) {
+    var event = window.event ? window.event : e;
+    var keyType = mapKeyCodeToLogicalCode(event.keyCode);
+    if (typeof keyType != "undefined") {
+      f(keyType);
+      return false;
+    } else {
+      return true;
+    }
+  };
+}
+
+function keyDown(code) {
+  keyPressesSinceLastFrame.push([code, true]);
+}
+
+function keyUp(code) {
+  keyPressesSinceLastFrame.push([code, false]);
+}
+
+var keyCommandSpace = function() {};
+var keyCommandLeft = function() {};
+var keyCommandUp = function() {};
+var keyCommandRight = function() {};
+var keyCommandDown = function() {};
+
+function processInput(globalState) {
+  var keyPresses = keyPressesSinceLastFrame;
+  keyPressesSinceLastFrame = [];
+  keyPresses.forEach(function(keyPress) {
+    globalState.keyPressHandlers[keyPress[0]](keyPress[1]);
+  });
+}
+
+function setupInput() {
+  window.onkeydown = handleKeyCode(keyDown);
+  window.onkeyup = handleKeyCode(keyUp);
+}
+
+function startAnimation(globalState, stage, world, renderer, stats) {
   var previousTimestamp = 0;
   var physicsTimestamp = 0;
   var physicsDuration = 1000 / 120; // 120fps
@@ -107,6 +187,7 @@ function startAnimation(stage, world, renderer, stats) {
   }
   function animate(currentTimestamp) {
     stats.begin();
+    processInput(globalState);
     while (currentTimestamp > physicsTimestamp) {
       physicsTimestamp += physicsDuration;
       updatePhysics(world, physicsDuration);
@@ -131,6 +212,10 @@ function updateDebugDrawState() {
 }
 
 function main() {
+  var globalState = {
+    character: null,
+    keyPressHandlers: [],
+  };
   var containerElement = document.getElementById(containerElementId);
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(backgroundColor);
@@ -158,8 +243,9 @@ function main() {
   containerElement.appendChild(stats.domElement);
   // add the renderer view element to the DOM
   containerElement.appendChild(renderer.view);
-  setupStage(stage, world);
-  startAnimation(stage, world, renderer, stats);
+  setupInput();
+  setupStage(globalState, stage, world, globalState);
+  startAnimation(globalState, stage, world, renderer, stats);
 }
 
 window.onload = main;
