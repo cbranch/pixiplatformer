@@ -4,8 +4,8 @@ require.config({
     'box2d': 'bower_components/box2d.js/box2d',
     'stats': 'bower_components/stats.js/build/stats.min',
     'inputhandler': 'js/inputhandler',
-    'debugdraw': 'debugdraw',
-    'pixiplatformer': 'pixiplatformer'
+    'debugdraw': 'js/debugdraw',
+    'pixiplatformer': 'js/pixiplatformer'
   },
   shim: {
     'box2d': {
