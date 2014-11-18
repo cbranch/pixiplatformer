@@ -1,4 +1,5 @@
-define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugDraw) {
+define(['pixi','box2d','stats','debugdraw','inputhandler'],
+       function(PIXI, Box2D, Stats, DebugDraw, InputHandler) {
   var backgroundColor = 0xDEF7FF;
   var viewportWidth = 1000;
   var viewportHeight = 600;
@@ -83,7 +84,9 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     globalState.animatableObjects.push(character);
     globalState.physicsObjects.push(character);
     globalState.character = character;
-    globalState.keyPressHandlers[KEY_SPACE] = function(down) { handleJumpInput(globalState, down); };
+    globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
+      handleJumpInput(globalState, down);
+    });
 
     // TODO define level...
     var dirtFloor = new StaticObject(world,
@@ -99,69 +102,10 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     globalState.animatableObjects.push(dirtFloor);
   }
 
-  // User input handling
-  var keyPressesSinceLastFrame = [];
-
-  var KEY_SPACE = 0;
-  var KEY_LEFT = 1;
-  var KEY_UP = 2;
-  var KEY_RIGHT = 3;
-  var KEY_DOWN = 4;
-
-  function mapKeyCodeToLogicalCode(code) {
-    switch (code) {
-      case 32:
-        return KEY_SPACE;
-      case 37:
-        return KEY_LEFT;
-      case 38:
-        return KEY_UP;
-      case 39:
-        return KEY_RIGHT;
-      case 40:
-        return KEY_DOWN;
-      default:
-        return undefined;
-    }
-  }
-
-  function handleKeyCode(f) {
-    return function(e) {
-      var event = window.event ? window.event : e;
-      var keyType = mapKeyCodeToLogicalCode(event.keyCode);
-      if (typeof keyType != "undefined") {
-        f(keyType);
-        return false;
-      } else {
-        return true;
-      }
-    };
-  }
-
-  function keyDown(code) {
-    keyPressesSinceLastFrame.push([code, true]);
-  }
-
-  function keyUp(code) {
-    keyPressesSinceLastFrame.push([code, false]);
-  }
-
-  function processInput(globalState) {
-    var keyPresses = keyPressesSinceLastFrame;
-    keyPressesSinceLastFrame = [];
-    keyPresses.forEach(function(keyPress) {
-      globalState.keyPressHandlers[keyPress[0]](keyPress[1]);
-    });
-  }
-
-  function setupInput() {
-    window.onkeydown = handleKeyCode(keyDown);
-    window.onkeyup = handleKeyCode(keyUp);
-  }
-
   function gameLoop(globalState, stage, world, renderer, stats) {
     var physicsTimestamp = 0;
     var physicsDuration = 1000 / 120; // 120fps
+    var inputHandler = globalState.inputHandler;
     function updatePhysics(dt) {
       world.Step(dt / 1000, 3, 2);
       globalState.physicsObjects.map(function(x) {
@@ -178,7 +122,7 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     }
     function tick(currentTimestamp) {
       stats.begin();
-      processInput(globalState);
+      inputHandler.processInput();
       while (currentTimestamp > physicsTimestamp) {
         physicsTimestamp += physicsDuration;
         updatePhysics(physicsDuration);
@@ -203,10 +147,11 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
   function main() {
     var globalState = {
       character: null,
-      keyPressHandlers: [],
+      inputHandler: null,
       animatableObjects: [],
       physicsObjects: [],
     };
+    globalState.inputHandler = new InputHandler();
     var containerElement = document.getElementById(containerElementId);
     // create an new instance of a pixi stage
     var stage = new PIXI.Stage(backgroundColor);
@@ -234,7 +179,7 @@ define(['pixi','box2d','stats','debugdraw'], function(PIXI, Box2D, Stats, DebugD
     containerElement.appendChild(stats.domElement);
     // add the renderer view element to the DOM
     containerElement.appendChild(renderer.view);
-    setupInput();
+    globalState.inputHandler.setupInput();
     setupStage(globalState, stage, world);
     gameLoop(globalState, stage, world, renderer, stats);
   }
