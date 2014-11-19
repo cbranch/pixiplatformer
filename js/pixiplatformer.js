@@ -84,8 +84,11 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
   }
 
   function setupStage(globalState, stage, world) {
+    globalState.backgroundLayer = new PIXI.DisplayObjectContainer();
+    globalState.foregroundLayer = new PIXI.DisplayObjectContainer();
+
     var character = new Character(world);
-    stage.addChild(character.sprite);
+    globalState.foregroundLayer.addChild(character.sprite);
     globalState.animatableObjects.push(character);
     globalState.physicsObjects.push(character);
     globalState.character = character;
@@ -105,16 +108,11 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
           x: 500,
           y: 600 - 32
         });
-    stage.addChild(dirtFloor.sprite);
+    globalState.backgroundLayer.addChild(dirtFloor.sprite);
     globalState.physicsObjects.push(dirtFloor);
     globalState.animatableObjects.push(dirtFloor);
-  }
 
-  function gameLoop(globalState, stage, world, renderer, stats) {
-    var physicsTimestamp = 0;
-    var physicsDuration = 1000 / 120; // 120fps
-    var inputHandler = globalState.inputHandler;
-    var pauseLayer = new PIXI.DisplayObjectContainer();
+    globalState.pauseLayer = new PIXI.DisplayObjectContainer();
     var pauseText = new PIXI.Text("PAUSED", {
       font: 'bold 48px Helvetica Neue, Arial, sans-serif',
       fill: 'white',
@@ -124,9 +122,18 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     pauseText.anchor = new PIXI.Point(0.5, 0.5);
     pauseText.x = 500;
     pauseText.y = 300;
-    pauseLayer.addChild(pauseText);
-    stage.addChild(pauseLayer);
-    pauseLayer.visible = false;
+    globalState.pauseLayer.addChild(pauseText);
+
+    stage.addChild(globalState.foregroundLayer);
+    stage.addChild(globalState.backgroundLayer);
+    stage.addChild(globalState.pauseLayer);
+    globalState.pauseLayer.visible = false;
+  }
+
+  function gameLoop(globalState, stage, world, renderer, stats) {
+    var physicsTimestamp = 0;
+    var physicsDuration = 1000 / 120; // 120fps
+    var inputHandler = globalState.inputHandler;
     function updatePhysics(dt) {
       world.Step(dt / 1000, 3, 2);
       globalState.physicsObjects.map(function(x) {
@@ -152,7 +159,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
         }
         if (pauseMessageShown) {
           pauseMessageShown = false;
-          pauseLayer.visible = false;
+          globalState.pauseLayer.visible = false;
         }
         updateDisplay(physicsTimestamp - currentTimestamp);
       } else {
@@ -163,7 +170,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
         // If first frame after pause, show pause message
         if (!pauseMessageShown) {
           pauseMessageShown = true;
-          pauseLayer.visible = true;
+          globalState.pauseLayer.visible = true;
           renderer.render(stage);
         }
       }
@@ -188,6 +195,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
       inputHandler: null,
       animatableObjects: [],
       physicsObjects: [],
+      backgroundLayer: null,
+      foregroundLayer: null,
+      pauseLayer: null
     };
     globalState.inputHandler = new InputHandler();
     var containerElement = document.getElementById(containerElementId);
