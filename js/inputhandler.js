@@ -12,7 +12,8 @@ define(function() {
   InputHandler.KEY_UP = 2;
   InputHandler.KEY_RIGHT = 3;
   InputHandler.KEY_DOWN = 4;
-  InputHandler.KEY_LAST = 5;
+  InputHandler.KEY_P = 5;
+  InputHandler.KEY_LAST = 6;
 
   InputHandler.prototype.mapKeyCodeToLogicalCode = function(code) {
     switch (code) {
@@ -26,6 +27,8 @@ define(function() {
         return InputHandler.KEY_RIGHT;
       case 40:
         return InputHandler.KEY_DOWN;
+      case 80:
+        return InputHandler.KEY_P;
       default:
         return undefined;
     }
@@ -37,6 +40,17 @@ define(function() {
     var handlers = this.keyPressHandlers;
     keyPresses.forEach(function(keyPress) {
       handlers[keyPress[0]](keyPress[1]);
+    });
+  };
+
+  InputHandler.prototype.processInputSelectively = function(keys) {
+    var keyPresses = this.keyPressesSinceLastFrame;
+    this.keyPressesSinceLastFrame = [];
+    var handlers = this.keyPressHandlers;
+    keyPresses.forEach(function(keyPress) {
+      if (keys.indexOf(keyPress[0]) != -1) {
+        handlers[keyPress[0]](keyPress[1]);
+      }
     });
   };
 

@@ -5,7 +5,6 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
   var viewportHeight = 600;
   var containerElementId = 'game';
 
-  var gameActive = true;
   var debugDrawActive = false;
   var debugGraphics = new PIXI.Graphics();
 
@@ -70,6 +69,12 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     };
   }
 
+  function setPaused(globalState, down) {
+    if (down) {
+      globalState.paused = !globalState.paused;
+    }
+  }
+
   function handleJumpInput(globalState, down) {
     if (down) {
       if (globalState.character) {
@@ -84,6 +89,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     globalState.animatableObjects.push(character);
     globalState.physicsObjects.push(character);
     globalState.character = character;
+    globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
+      setPaused(globalState, down);
+    });
     globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
       handleJumpInput(globalState, down);
     });
@@ -106,6 +114,19 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     var physicsTimestamp = 0;
     var physicsDuration = 1000 / 120; // 120fps
     var inputHandler = globalState.inputHandler;
+    var pauseLayer = new PIXI.DisplayObjectContainer();
+    var pauseText = new PIXI.Text("PAUSED", {
+      font: 'bold 48px Helvetica Neue, Arial, sans-serif',
+      fill: 'white',
+      stroke: 'black',
+      strokeThickness: 6
+    });
+    pauseText.anchor = new PIXI.Point(0.5, 0.5);
+    pauseText.x = 500;
+    pauseText.y = 300;
+    pauseLayer.addChild(pauseText);
+    stage.addChild(pauseLayer);
+    pauseLayer.visible = false;
     function updatePhysics(dt) {
       world.Step(dt / 1000, 3, 2);
       globalState.physicsObjects.map(function(x) {
@@ -120,24 +141,40 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
       }
       renderer.render(stage);
     }
+    var pauseMessageShown = false;
     function tick(currentTimestamp) {
       stats.begin();
-      inputHandler.processInput();
-      while (currentTimestamp > physicsTimestamp) {
-        physicsTimestamp += physicsDuration;
-        updatePhysics(physicsDuration);
+      if (!globalState.paused) {
+        inputHandler.processInput();
+        while (currentTimestamp > physicsTimestamp) {
+          physicsTimestamp += physicsDuration;
+          updatePhysics(physicsDuration);
+        }
+        if (pauseMessageShown) {
+          pauseMessageShown = false;
+          pauseLayer.visible = false;
+        }
+        updateDisplay(physicsTimestamp - currentTimestamp);
+      } else {
+        // Pause physics
+        physicsTimestamp = currentTimestamp;
+        // Allow unpause
+        inputHandler.processInputSelectively([InputHandler.KEY_P]);
+        // If first frame after pause, show pause message
+        if (!pauseMessageShown) {
+          pauseMessageShown = true;
+          pauseLayer.visible = true;
+          renderer.render(stage);
+        }
       }
-      updateDisplay(physicsTimestamp - currentTimestamp);
       stats.end();
-      if (gameActive) {
-        requestAnimFrame(tick);
-      }
+      requestAnimationFrame(tick);
     }
     function captureFirstTimestamp(currentTimestamp) {
       physicsTimestamp = currentTimestamp;
       tick();
     }
-    requestAnimFrame(captureFirstTimestamp);
+    requestAnimationFrame(captureFirstTimestamp);
   }
 
   function updateDebugDrawState() {
@@ -146,6 +183,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
 
   function main() {
     var globalState = {
+      paused: false,
       character: null,
       inputHandler: null,
       animatableObjects: [],
