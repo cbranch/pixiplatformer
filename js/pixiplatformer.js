@@ -54,6 +54,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
         globalState.character.moveRight(down);
       }
     });
+    globalState.inputHandler.setHandler(InputHandler.KEY_UP, function(down) {});
+    globalState.inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {});
 
     // TODO define level...
     var dirtFloor = new Entities.StaticObject(world,
