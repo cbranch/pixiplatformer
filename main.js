@@ -5,6 +5,7 @@ require.config({
     'stats': 'bower_components/stats.js/build/stats.min',
     'inputhandler': 'js/inputhandler',
     'debugdraw': 'js/debugdraw',
+    'multipledispatch': 'js/multipledispatch',
     'pixiplatformer': 'js/pixiplatformer'
   },
   shim: {

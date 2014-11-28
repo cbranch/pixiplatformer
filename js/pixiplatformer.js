@@ -1,5 +1,5 @@
-define(['pixi','box2d','stats','debugdraw','inputhandler'],
-       function(PIXI, Box2D, Stats, DebugDraw, InputHandler) {
+define(['pixi','box2d','stats','debugdraw','inputhandler','multipledispatch'],
+       function(PIXI, Box2D, Stats, DebugDraw, InputHandler, MultipleDispatch) {
   var backgroundColor = 0xDEF7FF;
   var viewportWidth = 1000;
   var viewportHeight = 600;
@@ -8,41 +8,92 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
   var debugDrawActive = false;
   var debugGraphics = new PIXI.Graphics();
 
+  var instanceOf = MultipleDispatch.instanceOf;
+  var Match = MultipleDispatch.Match;
+  var MatchTypes = MultipleDispatch.MatchTypes;
+
+  function ReadyToJumpState() {
+    this.startJump = false;
+  }
+  ReadyToJumpState.prototype.handleInput = function(down) {
+    if (down) {
+      this.startJump = true;
+    }
+    return this;
+  };
+  ReadyToJumpState.prototype.physics = function(dt, actor) {
+    if (this.startJump) {
+      actor.body.ApplyLinearImpulse(new Box2D.b2Vec2(0, -6), actor.body.GetWorldCenter());
+      return new JumpingState();
+    }
+  };
+  ReadyToJumpState.prototype.onFloor = function () {};
+  function JumpingState() {
+    this.timeLeftForJumping = 60;
+  }
+  JumpingState.prototype.handleInput = function(down) {
+    if (!down) {
+      return new FallingState();
+    }
+  };
+  JumpingState.prototype.physics = function(dt, actor) {
+    actor.body.ApplyForce(new Box2D.b2Vec2(0, -6), actor.body.GetWorldCenter());
+    this.timeLeftForJumping--;
+    if (this.timeLeftForJumping) {
+      return new FallingState();
+    }
+  };
+  JumpingState.prototype.onFloor = function () {};
+  function FallingState() {
+  }
+  FallingState.prototype.handleInput = function(down) {
+  };
+  FallingState.prototype.physics = function(dt, actor) {
+  };
+  FallingState.prototype.onFloor = function () {
+    return new ReadyToJumpState();
+  };
+
   function Character(world) {
-    var self = this;
     var characterTexture = PIXI.Texture.fromImage("assets/character.png");
     var sprite = new PIXI.Sprite (characterTexture);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
-    self.sprite = sprite;
+    this.sprite = sprite;
 
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_type(Box2D.b2_dynamicBody);
     bodyDef.set_position(new Box2D.b2Vec2(5, 0));
     bodyDef.set_fixedRotation(true);
-    self.body = world.CreateBody(bodyDef);
+    this.body = world.CreateBody(bodyDef);
+    this.body.userData = this;
     var shapeDef = new Box2D.b2PolygonShape();
     shapeDef.SetAsBox(0.335, 0.825);
     var fixtureDef = new Box2D.b2FixtureDef();
     fixtureDef.set_shape(shapeDef);
     fixtureDef.set_friction(0.3);
     fixtureDef.set_density(1.0);
-    self.body.CreateFixture(shapeDef, 1.0);
+    this.body.CreateFixture(shapeDef, 1.0);
 
-    self.physics = function(dt) {
-    };
-    self.animate = function(dt) {
-      var pos = self.body.GetPosition();
-      self.sprite.position.set(pos.get_x() * 100, pos.get_y() * 100);
-      self.sprite.rotation = self.body.GetAngle();
-    };
-    self.tryToJump = function() {
-      // TODO Should only jump if we're on the ground
-      // TODO Should continue to apply force for a short time unless we let go of jump
-      self.body.ApplyLinearImpulse(new Box2D.b2Vec2(0, -6), self.body.GetWorldCenter());
-    };
+    this.jumpState = new ReadyToJumpState(this);
   }
-
+  Character.prototype.physics = function(dt) {
+    var newState = this.jumpState.physics(dt, this);
+    if (newState) {
+      this.jumpState = newState;
+    }
+  };
+  Character.prototype.animate = function(dt) {
+    var pos = this.body.GetPosition();
+    this.sprite.position.set(pos.get_x() * 100, pos.get_y() * 100);
+    this.sprite.rotation = this.body.GetAngle();
+  };
+  Character.prototype.handleJumpInput = function(down) {
+    var newState = this.jumpState.handleInput(down);
+    if (newState) {
+      this.jumpState = newState;
+    }
+  };
   function StaticObject(world, o) {
     var self = this;
     var texture = PIXI.Texture.fromImage(o.imagePath);
@@ -50,24 +101,37 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
     self.sprite = sprite;
+    self.sprite.position.set(o.x, o.y);
 
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_position(new Box2D.b2Vec2(o.x / 100, o.y / 100));
     self.body = world.CreateBody(bodyDef);
+    self.body.userData = self;
     var shapeDef = new Box2D.b2PolygonShape();
     shapeDef.SetAsBox(o.width / 200, o.height / 200);
     self.body.CreateFixture(shapeDef, 1.0);
-
-    // Simple animation to demonstrate the concept for now...
-    self.easeCurve = 0;
-    self.physics = function(dt) {
-    };
-    self.animate = function(dt) {
-      var pos = self.body.GetPosition();
-      self.sprite.position.set(pos.get_x() * 100, pos.get_y() * 100);
-      self.sprite.rotation = self.body.GetAngle();
-    };
   }
+
+  Character.prototype.handleCollision = Match(
+    MatchTypes(
+      instanceOf(StaticObject),
+      function (staticObject) {
+        var newState = this.jumpState.onFloor();
+        if (newState) {
+          this.jumpState = newState;
+        }
+      }
+    )
+  );
+
+  StaticObject.prototype.handleCollision = Match(
+    MatchTypes(
+      instanceOf(Character),
+      function (character) {
+        character.handleCollision(this);
+      }
+    )
+  );
 
   function setPaused(globalState, down) {
     if (down) {
@@ -75,12 +139,17 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     }
   }
 
-  function handleJumpInput(globalState, down) {
-    if (down) {
-      if (globalState.character) {
-        globalState.character.tryToJump();
-      }
+  function postSolve(contactPtr, impulsePtr) {
+    var contact = Box2D.wrapPointer(contactPtr, Box2D.b2Contact);
+    var impulse = Box2D.wrapPointer(impulsePtr, Box2D.b2ContactImpulse);
+    var nImpulses = impulse.get_count();
+    var impulses = [];
+    for (var i = 0; i < nImpulses; i++) {
+      impulses.push(Box2D.getValue(impulsePtr + i * 4, "float"));
     }
+    var objA = contact.GetFixtureA().GetBody().userData;
+    var objB = contact.GetFixtureB().GetBody().userData;
+    objA.handleCollision(objB);
   }
 
   function setupStage(globalState, stage, world) {
@@ -96,7 +165,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
       setPaused(globalState, down);
     });
     globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
-      handleJumpInput(globalState, down);
+      if (globalState.character) {
+        globalState.character.handleJumpInput(down);
+      }
     });
 
     // TODO define level...
@@ -109,8 +180,6 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
           y: 600 - 32
         });
     globalState.backgroundLayer.addChild(dirtFloor.sprite);
-    globalState.physicsObjects.push(dirtFloor);
-    globalState.animatableObjects.push(dirtFloor);
 
     globalState.pauseLayer = new PIXI.DisplayObjectContainer();
     var pauseText = new PIXI.Text("PAUSED", {
@@ -207,6 +276,12 @@ define(['pixi','box2d','stats','debugdraw','inputhandler'],
     var renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
     // setup box2d
     var world = new Box2D.b2World(new Box2D.b2Vec2(0, 9.8));
+    var contactListener = new Box2D.JSContactListener();
+    contactListener.BeginContact = function (_) {};
+    contactListener.EndContact = function (_) {};
+    contactListener.PreSolve  = function (contact, manifold) {};
+    contactListener.PostSolve = postSolve;
+    world.SetContactListener(contactListener);
     // box2d debug draw
     debugGraphics = new PIXI.Graphics();
     stage.addChild(debugGraphics);
