@@ -30,6 +30,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
   function setupStage(globalState, stage, world) {
     globalState.backgroundLayer = new PIXI.DisplayObjectContainer();
     globalState.foregroundLayer = new PIXI.DisplayObjectContainer();
+    globalState.foregroundScrollableLayer = new PIXI.DisplayObjectContainer();
+    globalState.foregroundScrollableLayer.addChild(globalState.foregroundLayer);
+    globalState.foregroundScrollableLayer.addChild(globalState.backgroundLayer);
 
     var character = new Entities.Character(world);
     globalState.foregroundLayer.addChild(character.sprite);
@@ -77,8 +80,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
       worldEdgeDef.Set(new Box2D.b2Vec2(x1, y1), new Box2D.b2Vec2(x2, y2));
       body.CreateFixture(worldEdgeDef, 1.0);
     }
-    defineWorldEdge(0,-10,0,10);
-    defineWorldEdge(30,-10,30,10);
+    defineWorldEdge(0, -10, 0, globalState.worldHeight / 100 + 10);
+    defineWorldEdge(globalState.worldWidth / 100, -10,
+                    globalState.worldWidth / 100, globalState.worldHeight / 100 + 10);
 
     globalState.pauseLayer = new PIXI.DisplayObjectContainer();
     var pauseText = new PIXI.Text("PAUSED", {
@@ -92,8 +96,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     pauseText.y = 300;
     globalState.pauseLayer.addChild(pauseText);
 
-    stage.addChild(globalState.foregroundLayer);
-    stage.addChild(globalState.backgroundLayer);
+    stage.addChild(globalState.foregroundScrollableLayer);
     stage.addChild(globalState.pauseLayer);
     globalState.pauseLayer.visible = false;
   }
@@ -108,8 +111,18 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
         x.physics(dt);
       });
     }
+    function updateScrolling() {
+      var characterPos = globalState.character.body.GetPosition();
+      var maxScrollX = -globalState.worldWidth + globalState.screenWidth;
+      var maxScrollY = -globalState.worldHeight + globalState.screenHeight;
+      var scrollX = globalState.screenWidth / 2 + characterPos.get_x() * -100;
+      var scrollY = globalState.screenHeight / 2 + characterPos.get_y() * -100;
+      globalState.foregroundScrollableLayer.x = Math.min(0, Math.max(maxScrollX, scrollX));
+      globalState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
+    }
     function updateDisplay(dt) {
       globalState.animatableObjects.map(function(x) { x.animate(dt); });
+      updateScrolling();
       debugGraphics.clear();
       if (debugDrawActive) {
         world.DrawDebugData();
@@ -165,6 +178,11 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
       physicsObjects: [],
       backgroundLayer: null,
       foregroundLayer: null,
+      foregroundScrollableLayer: null,
+      worldWidth: 3000,
+      worldHeight: 600,
+      screenWidth: 1000,
+      screenHeight: 600,
       pauseLayer: null
     };
     globalState.inputHandler = new InputHandler();
