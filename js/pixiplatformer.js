@@ -58,15 +58,27 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     globalState.inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {});
 
     // TODO define level...
-    var dirtFloor = new Entities.StaticObject(world,
+    var dirtFloor = new Entities.StaticObstacle(world,
         {
           imagePath: "assets/dirt-floor.png",
-          width: 1000,
+          width: 3000,
           height: 64,
-          x: 500,
+          x: 1500,
           y: 600 - 32
         });
     globalState.backgroundLayer.addChild(dirtFloor.sprite);
+
+    function defineWorldEdge(x1, y1, x2, y2) {
+      var bodyDef = new Box2D.b2BodyDef();
+      bodyDef.set_position(new Box2D.b2Vec2((x2 - x1) / 2, (y2 - y1) / 2));
+      var body = world.CreateBody(bodyDef);
+      body.userData = new Entities.WorldEdge();
+      var worldEdgeDef = new Box2D.b2EdgeShape();
+      worldEdgeDef.Set(new Box2D.b2Vec2(x1, y1), new Box2D.b2Vec2(x2, y2));
+      body.CreateFixture(worldEdgeDef, 1.0);
+    }
+    defineWorldEdge(0,-10,0,10);
+    defineWorldEdge(30,-10,30,10);
 
     globalState.pauseLayer = new PIXI.DisplayObjectContainer();
     var pauseText = new PIXI.Text("PAUSED", {

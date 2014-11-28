@@ -114,27 +114,32 @@ define(['pixi','box2d','multipledispatch'],
     this.movingRight = down;
   };
 
-  function StaticObject(world, o) {
-    var self = this;
+  function StaticObject(o) {
     var texture = PIXI.Texture.fromImage(o.imagePath);
     var sprite = new PIXI.TilingSprite (texture, o.width, o.height);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
-    self.sprite = sprite;
-    self.sprite.position.set(o.x, o.y);
+    this.sprite = sprite;
+    this.sprite.position.set(o.x, o.y);
+  }
+
+  function StaticObstacle(world, o) {
+    StaticObject.call(this, o);
 
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_position(new Box2D.b2Vec2(o.x / 100, o.y / 100));
-    self.body = world.CreateBody(bodyDef);
-    self.body.userData = self;
+    this.body = world.CreateBody(bodyDef);
+    this.body.userData = this;
     var shapeDef = new Box2D.b2PolygonShape();
     shapeDef.SetAsBox(o.width / 200, o.height / 200);
-    self.body.CreateFixture(shapeDef, 1.0);
+    this.body.CreateFixture(shapeDef, 1.0);
   }
+  StaticObstacle.prototype = Object.create (StaticObject.prototype);
+  StaticObstacle.prototype.constructor = StaticObstacle;
 
   Character.prototype.handleCollision = Match(
     MatchTypes(
-      instanceOf(StaticObject),
+      instanceOf(StaticObstacle),
       function (staticObject) {
         var newState = this.jumpState.onFloor();
         if (newState) {
@@ -144,7 +149,7 @@ define(['pixi','box2d','multipledispatch'],
     )
   );
 
-  StaticObject.prototype.handleCollision = Match(
+  StaticObstacle.prototype.handleCollision = Match(
     MatchTypes(
       instanceOf(Character),
       function (character) {
@@ -153,8 +158,18 @@ define(['pixi','box2d','multipledispatch'],
     )
   );
 
+  function WorldEdge() {
+  }
+  WorldEdge.prototype.handleCollision = function (o) {
+    if (!(o instanceof WorldEdge)) {
+      o.handleCollision (this);
+    }
+  };
+
   return {
     Character: Character,
-    StaticObject: StaticObject
+    StaticObject: StaticObject,
+    StaticObstacle: StaticObstacle,
+    WorldEdge: WorldEdge
   };
 });
