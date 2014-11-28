@@ -6,6 +6,7 @@ require.config({
     'inputhandler': 'js/inputhandler',
     'debugdraw': 'js/debugdraw',
     'multipledispatch': 'js/multipledispatch',
+    'entities': 'js/entities',
     'pixiplatformer': 'js/pixiplatformer'
   },
   shim: {
