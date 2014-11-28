@@ -20,6 +20,7 @@ define(['pixi','box2d','multipledispatch'],
     }
   };
   ReadyToJumpState.prototype.onFloor = function () {};
+  ReadyToJumpState.prototype.restrictMovement = function () { return false; };
   function JumpingState() {
     this.timeLeftForJumping = 60;
   }
@@ -35,7 +36,10 @@ define(['pixi','box2d','multipledispatch'],
       return new FallingState();
     }
   };
-  JumpingState.prototype.onFloor = function () {};
+  JumpingState.prototype.onFloor = function () {
+    return new ReadyToJumpState();
+  };
+  JumpingState.prototype.restrictMovement = function () { return true; };
   function FallingState() {
   }
   FallingState.prototype.handleInput = function(down) {
@@ -45,6 +49,7 @@ define(['pixi','box2d','multipledispatch'],
   FallingState.prototype.onFloor = function () {
     return new ReadyToJumpState();
   };
+  FallingState.prototype.restrictMovement = function () { return true; };
 
   function Character(world) {
     var characterTexture = PIXI.Texture.fromImage("assets/character.png");
@@ -63,16 +68,32 @@ define(['pixi','box2d','multipledispatch'],
     shapeDef.SetAsBox(0.335, 0.825);
     var fixtureDef = new Box2D.b2FixtureDef();
     fixtureDef.set_shape(shapeDef);
-    fixtureDef.set_friction(0.3);
+    fixtureDef.set_friction(0.6);
     fixtureDef.set_density(1.0);
     this.body.CreateFixture(shapeDef, 1.0);
 
-    this.jumpState = new ReadyToJumpState(this);
+    this.jumpState = new FallingState(this);
+    this.movingLeft = false;
+    this.movingRight = false;
   }
   Character.prototype.physics = function(dt) {
     var newState = this.jumpState.physics(dt, this);
     if (newState) {
       this.jumpState = newState;
+    }
+    var horizontalMovement = 0;
+    if (this.movingLeft) {
+      if (!this.movingRight) {
+        horizontalMovement = -8;
+      }
+    } else if (this.movingRight) {
+      horizontalMovement = 8;
+    }
+    if (horizontalMovement !== 0) {
+      if (this.jumpState.restrictMovement ()) {
+        horizontalMovement /= 3;
+      }
+      this.body.ApplyForce(new Box2D.b2Vec2(horizontalMovement, 0), this.body.GetWorldCenter());
     }
   };
   Character.prototype.animate = function(dt) {
@@ -86,6 +107,13 @@ define(['pixi','box2d','multipledispatch'],
       this.jumpState = newState;
     }
   };
+  Character.prototype.moveLeft = function(down) {
+    this.movingLeft = down;
+  };
+  Character.prototype.moveRight = function(down) {
+    this.movingRight = down;
+  };
+
   function StaticObject(world, o) {
     var self = this;
     var texture = PIXI.Texture.fromImage(o.imagePath);
