@@ -169,6 +169,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     debugDrawActive = document.getElementById('debugDraw').checked;
   }
 
+  function addDebugDrawListener() {
+    document.getElementById('debugDraw').onclick = updateDebugDrawState;
+  }
+
   function main() {
     var globalState = {
       paused: false,
@@ -210,6 +214,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     var e_pairBit = 0x0008;
     var e_centerOfMassBit = 0x0010;
     debugDraw.SetFlags(e_shapeBit | e_aabbBit);
+    addDebugDrawListener();
     updateDebugDrawState();
     // FPS stats
     var stats = new Stats();

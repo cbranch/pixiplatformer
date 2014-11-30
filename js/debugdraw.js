@@ -48,10 +48,10 @@ define(['pixi','box2d'], function(PIXI, Box2D) {
 
       if (fill) {
         //render axis marker
-        var vert2V = copyVec2(centerV);
-        vert2V.op_add( scaledVec2(axisV, radius) );
-        context.moveTo(centerV.get_x() * scale, centerV.get_y() * scale);
-        context.lineTo(vert2V.get_x() * scale, vert2V.get_y() * scale);
+        var vert2V = new Box2D.b2Vec2(centerV.get_x(), centerV.get_y());
+        vert2V.op_add(new Box2D.b2Vec2(axisV.get_x() * radius, axisV.get_y() * radius));
+        graphics.moveTo(centerV.get_x() * scale, centerV.get_y() * scale);
+        graphics.lineTo(vert2V.get_x() * scale, vert2V.get_y() * scale);
       }
     }
     function drawAxes(graphics, x, y, angle) {
