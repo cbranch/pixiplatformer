@@ -64,13 +64,21 @@ define(['pixi','box2d','multipledispatch'],
     bodyDef.set_fixedRotation(true);
     this.body = world.CreateBody(bodyDef);
     this.body.userData = this;
-    var shapeDef = new Box2D.b2PolygonShape();
-    shapeDef.SetAsBox(0.335, 0.825);
-    var fixtureDef = new Box2D.b2FixtureDef();
-    fixtureDef.set_shape(shapeDef);
-    fixtureDef.set_friction(0.6);
-    fixtureDef.set_density(1.0);
-    this.body.CreateFixture(shapeDef, 1.0);
+    var characterBodyShape = new Box2D.b2PolygonShape();
+    characterBodyShape.SetAsBox(0.335, 0.490);
+    var bodyFixtureDef = new Box2D.b2FixtureDef();
+    bodyFixtureDef.set_shape(characterBodyShape);
+    bodyFixtureDef.set_friction(1.0);
+    bodyFixtureDef.set_density(1.0);
+    this.body.CreateFixture(bodyFixtureDef);
+    var characterFeetShape = new Box2D.b2CircleShape();
+    characterFeetShape.set_m_p(new Box2D.b2Vec2(0.0, 0.490));
+    characterFeetShape.set_m_radius(0.335);
+    var feetFixtureDef = new Box2D.b2FixtureDef();
+    feetFixtureDef.set_shape(characterFeetShape);
+    feetFixtureDef.set_friction(1.0);
+    feetFixtureDef.set_density(1.0);
+    this.body.CreateFixture(feetFixtureDef);
 
     this.jumpState = new FallingState(this);
     this.movingLeft = false;
