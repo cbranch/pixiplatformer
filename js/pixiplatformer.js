@@ -203,19 +203,6 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     contactListener.PreSolve  = function (contact, manifold) {};
     contactListener.PostSolve = postSolve;
     world.SetContactListener(contactListener);
-    // box2d debug draw
-    debugGraphics = new PIXI.Graphics();
-    stage.addChild(debugGraphics);
-    var debugDraw = DebugDraw.getPIXIDebugDraw(debugGraphics, 100);
-    world.SetDebugDraw(debugDraw);
-    var e_shapeBit = 0x0001;
-    var e_jointBit = 0x0002;
-    var e_aabbBit = 0x0004;
-    var e_pairBit = 0x0008;
-    var e_centerOfMassBit = 0x0010;
-    debugDraw.SetFlags(e_shapeBit | e_aabbBit);
-    addDebugDrawListener();
-    updateDebugDrawState();
     // FPS stats
     var stats = new Stats();
     stats.domElement.style.position = 'absolute';
@@ -226,6 +213,20 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     containerElement.appendChild(renderer.view);
     globalState.inputHandler.setupInput();
     setupStage(globalState, stage, world);
+    // box2d debug draw
+    debugGraphics = new PIXI.Graphics();
+    var debugDraw = DebugDraw.getPIXIDebugDraw(debugGraphics, 100);
+    world.SetDebugDraw(debugDraw);
+    var e_shapeBit = 0x0001;
+    var e_jointBit = 0x0002;
+    var e_aabbBit = 0x0004;
+    var e_pairBit = 0x0008;
+    var e_centerOfMassBit = 0x0010;
+    debugDraw.SetFlags(e_shapeBit | e_aabbBit);
+    addDebugDrawListener();
+    updateDebugDrawState();
+    globalState.foregroundScrollableLayer.addChild(debugGraphics);
+    // let's go
     gameLoop(globalState, stage, world, renderer, stats);
   }
 
