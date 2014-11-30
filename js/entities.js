@@ -89,19 +89,25 @@ define(['pixi','box2d','multipledispatch'],
     if (newState) {
       this.jumpState = newState;
     }
-    var horizontalMovement = 0;
+    var currentVelocity = this.body.GetLinearVelocity();
+    var horizontalMovement = 4.0;
+    var horizontalMaxMovementThisFrame = 0.05 * dt;
+    if (this.jumpState.restrictMovement ()) {
+      horizontalMaxMovementThisFrame /= 10.0;
+    }
+    var horizontalChange = 0.0;
     if (this.movingLeft) {
       if (!this.movingRight) {
-        horizontalMovement = -8;
+        horizontalChange = -horizontalMovement - currentVelocity.get_x();
+        horizontalChange = Math.min(0, Math.max(-horizontalMaxMovementThisFrame, horizontalChange));
       }
     } else if (this.movingRight) {
-      horizontalMovement = 8;
+      horizontalChange = horizontalMovement - currentVelocity.get_x();
+      horizontalChange = Math.min(horizontalMaxMovementThisFrame, Math.max(0, horizontalChange));
     }
-    if (horizontalMovement !== 0) {
-      if (this.jumpState.restrictMovement ()) {
-        horizontalMovement /= 3;
-      }
-      this.body.ApplyForce(new Box2D.b2Vec2(horizontalMovement, 0), this.body.GetWorldCenter());
+    if (horizontalChange !== 0) {
+      var impulse = this.body.GetMass() * horizontalChange;
+      this.body.ApplyLinearImpulse(new Box2D.b2Vec2(impulse, 0), this.body.GetWorldCenter());
     }
   };
   Character.prototype.animate = function(dt) {
