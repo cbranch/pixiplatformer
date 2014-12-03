@@ -1,12 +1,11 @@
 define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
        function(PIXI, Box2D, Stats, DebugDraw, InputHandler, Entities) {
+
   var backgroundColor = 0xDEF7FF;
   var viewportWidth = 1000;
   var viewportHeight = 600;
   var containerElementId = 'game';
-
-  var debugDrawActive = false;
-  var debugGraphics = new PIXI.Graphics();
+  var debugDrawId = 'debugDraw';
 
   function setPaused(globalState, down) {
     if (down) {
@@ -27,12 +26,26 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     objA.handleCollision(objB);
   }
 
-  function setupStage(globalState, stage, world) {
+  function setupLevel(globalState) {
+    // setup box2d
+    var world = new Box2D.b2World(new Box2D.b2Vec2(0, 9.8));
+    globalState.world = world;
+    var contactListener = new Box2D.JSContactListener();
+    contactListener.BeginContact = function (_) {};
+    contactListener.EndContact = function (_) {};
+    contactListener.PreSolve  = function (contact, manifold) {};
+    contactListener.PostSolve = postSolve;
+    world.SetContactListener(contactListener);
+    world.SetDebugDraw(globalState.debugDraw);
+    // create an new instance of a pixi stage
+    var stage = new PIXI.Stage(backgroundColor);
+    globalState.stage = stage;
     globalState.backgroundLayer = new PIXI.DisplayObjectContainer();
     globalState.foregroundLayer = new PIXI.DisplayObjectContainer();
     globalState.foregroundScrollableLayer = new PIXI.DisplayObjectContainer();
     globalState.foregroundScrollableLayer.addChild(globalState.foregroundLayer);
     globalState.foregroundScrollableLayer.addChild(globalState.backgroundLayer);
+    globalState.foregroundScrollableLayer.addChild(globalState.debugGraphics);
 
     var character = new Entities.Character(world);
     globalState.foregroundLayer.addChild(character.sprite);
@@ -101,7 +114,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     globalState.pauseLayer.visible = false;
   }
 
-  function gameLoop(globalState, stage, world, renderer, stats) {
+  function gameLoop(globalState, renderer) {
+    var world = globalState.world;
+    var stage = globalState.stage;
+    var stats = globalState.stats;
     var physicsTimestamp = 0;
     var physicsDuration = 1000 / 120; // 120fps
     var inputHandler = globalState.inputHandler;
@@ -123,8 +139,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     function updateDisplay(dt) {
       globalState.animatableObjects.map(function(x) { x.animate(dt); });
       updateScrolling();
-      debugGraphics.clear();
-      if (debugDrawActive) {
+      globalState.debugGraphics.clear();
+      if (globalState.debugDrawActive) {
         world.DrawDebugData();
       }
       renderer.render(stage);
@@ -165,19 +181,41 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     requestAnimationFrame(captureFirstTimestamp);
   }
 
-  function updateDebugDrawState() {
-    debugDrawActive = document.getElementById('debugDraw').checked;
+  function createDebugDraw(debugGraphics, debugDrawCheckbox) {
+    var debugDraw = DebugDraw.getPIXIDebugDraw(debugGraphics, 100);
+    var e_shapeBit = 0x0001;
+    var e_jointBit = 0x0002;
+    var e_aabbBit = 0x0004;
+    var e_pairBit = 0x0008;
+    var e_centerOfMassBit = 0x0010;
+    debugDraw.SetFlags(e_shapeBit | e_aabbBit);
+    function getDebugDrawState() {
+      return debugDrawCheckbox.checked;
+    }
+    debugDraw.enable = getDebugDrawState();
+    debugDrawCheckbox.onclick = function() { debugDraw.enable = getDebugDrawState(); };
+    return debugDraw;
   }
 
-  function addDebugDrawListener() {
-    document.getElementById('debugDraw').onclick = updateDebugDrawState;
+  function initStats() {
+    // FPS stats
+    var stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.right = '0px';
+    stats.domElement.style.bottom = '0px';
+    return stats;
   }
 
   function main() {
     var globalState = {
       paused: false,
-      character: null,
+      stats: null,
+      stage: null,
+      world: null,
       inputHandler: null,
+      debugDraw: null,
+      debugGraphics: null,
+      character: null,
       animatableObjects: [],
       physicsObjects: [],
       backgroundLayer: null,
@@ -190,44 +228,17 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
       pauseLayer: null
     };
     globalState.inputHandler = new InputHandler();
-    var containerElement = document.getElementById(containerElementId);
-    // create an new instance of a pixi stage
-    var stage = new PIXI.Stage(backgroundColor);
-    // create a renderer instance.
-    var renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
-    // setup box2d
-    var world = new Box2D.b2World(new Box2D.b2Vec2(0, 9.8));
-    var contactListener = new Box2D.JSContactListener();
-    contactListener.BeginContact = function (_) {};
-    contactListener.EndContact = function (_) {};
-    contactListener.PreSolve  = function (contact, manifold) {};
-    contactListener.PostSolve = postSolve;
-    world.SetContactListener(contactListener);
-    // FPS stats
-    var stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.right = '0px';
-    stats.domElement.style.bottom = '0px';
-    containerElement.appendChild(stats.domElement);
-    // add the renderer view element to the DOM
-    containerElement.appendChild(renderer.view);
     globalState.inputHandler.setupInput();
-    setupStage(globalState, stage, world);
-    // box2d debug draw
-    debugGraphics = new PIXI.Graphics();
-    var debugDraw = DebugDraw.getPIXIDebugDraw(debugGraphics, 100);
-    world.SetDebugDraw(debugDraw);
-    var e_shapeBit = 0x0001;
-    var e_jointBit = 0x0002;
-    var e_aabbBit = 0x0004;
-    var e_pairBit = 0x0008;
-    var e_centerOfMassBit = 0x0010;
-    debugDraw.SetFlags(e_shapeBit | e_aabbBit);
-    addDebugDrawListener();
-    updateDebugDrawState();
-    globalState.foregroundScrollableLayer.addChild(debugGraphics);
+    globalState.stats = initStats();
+    var containerElement = document.getElementById(containerElementId);
+    var renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
+    containerElement.appendChild(renderer.view);
+    containerElement.appendChild(globalState.stats.domElement);
+    globalState.debugGraphics = new PIXI.Graphics();
+    globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
+    setupLevel(globalState);
     // let's go
-    gameLoop(globalState, stage, world, renderer, stats);
+    gameLoop(globalState, renderer);
   }
 
   return function () {
