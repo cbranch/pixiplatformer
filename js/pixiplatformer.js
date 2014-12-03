@@ -7,9 +7,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
   var containerElementId = 'game';
   var debugDrawId = 'debugDraw';
 
-  function setPaused(globalState, down) {
+  function setPaused(levelState, down) {
     if (down) {
-      globalState.paused = !globalState.paused;
+      levelState.paused = !levelState.paused;
     }
   }
 
@@ -26,10 +26,27 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     objA.handleCollision(objB);
   }
 
-  function setupLevel(globalState) {
+  function createLevel(globalState) {
+    var levelState = {
+      globalState: globalState,
+      paused: false,
+      pauseLayer: null,
+      stage: null,
+      world: null,
+      worldWidth: 3000,
+      worldHeight: 600,
+      character: null,
+      animatableObjects: [],
+      physicsObjects: [],
+      backgroundLayer: null,
+      foregroundLayer: null,
+      foregroundScrollableLayer: null,
+      endLevel: false,
+      onLevelEnded: function () {}
+    };
     // setup box2d
     var world = new Box2D.b2World(new Box2D.b2Vec2(0, 9.8));
-    globalState.world = world;
+    levelState.world = world;
     var contactListener = new Box2D.JSContactListener();
     contactListener.BeginContact = function (_) {};
     contactListener.EndContact = function (_) {};
@@ -39,35 +56,35 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     world.SetDebugDraw(globalState.debugDraw);
     // create an new instance of a pixi stage
     var stage = new PIXI.Stage(backgroundColor);
-    globalState.stage = stage;
-    globalState.backgroundLayer = new PIXI.DisplayObjectContainer();
-    globalState.foregroundLayer = new PIXI.DisplayObjectContainer();
-    globalState.foregroundScrollableLayer = new PIXI.DisplayObjectContainer();
-    globalState.foregroundScrollableLayer.addChild(globalState.foregroundLayer);
-    globalState.foregroundScrollableLayer.addChild(globalState.backgroundLayer);
-    globalState.foregroundScrollableLayer.addChild(globalState.debugGraphics);
+    levelState.stage = stage;
+    levelState.backgroundLayer = new PIXI.DisplayObjectContainer();
+    levelState.foregroundLayer = new PIXI.DisplayObjectContainer();
+    levelState.foregroundScrollableLayer = new PIXI.DisplayObjectContainer();
+    levelState.foregroundScrollableLayer.addChild(levelState.foregroundLayer);
+    levelState.foregroundScrollableLayer.addChild(levelState.backgroundLayer);
+    levelState.foregroundScrollableLayer.addChild(globalState.debugGraphics);
 
     var character = new Entities.Character(world);
-    globalState.foregroundLayer.addChild(character.sprite);
-    globalState.animatableObjects.push(character);
-    globalState.physicsObjects.push(character);
-    globalState.character = character;
+    levelState.foregroundLayer.addChild(character.sprite);
+    levelState.animatableObjects.push(character);
+    levelState.physicsObjects.push(character);
+    levelState.character = character;
     globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
-      setPaused(globalState, down);
+      setPaused(levelState, down);
     });
     globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
-      if (globalState.character) {
-        globalState.character.handleJumpInput(down);
+      if (levelState.character) {
+        levelState.character.handleJumpInput(down);
       }
     });
     globalState.inputHandler.setHandler(InputHandler.KEY_LEFT, function(down) {
-      if (globalState.character) {
-        globalState.character.moveLeft(down);
+      if (levelState.character) {
+        levelState.character.moveLeft(down);
       }
     });
     globalState.inputHandler.setHandler(InputHandler.KEY_RIGHT, function(down) {
-      if (globalState.character) {
-        globalState.character.moveRight(down);
+      if (levelState.character) {
+        levelState.character.moveRight(down);
       }
     });
     globalState.inputHandler.setHandler(InputHandler.KEY_UP, function(down) {});
@@ -82,7 +99,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
           x: 1500,
           y: 600 - 32
         });
-    globalState.backgroundLayer.addChild(dirtFloor.sprite);
+    levelState.backgroundLayer.addChild(dirtFloor.sprite);
 
     function defineWorldEdge(x1, y1, x2, y2) {
       var bodyDef = new Box2D.b2BodyDef();
@@ -93,11 +110,11 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
       worldEdgeDef.Set(new Box2D.b2Vec2(x1, y1), new Box2D.b2Vec2(x2, y2));
       body.CreateFixture(worldEdgeDef, 1.0);
     }
-    defineWorldEdge(0, -10, 0, globalState.worldHeight / 100 + 10);
-    defineWorldEdge(globalState.worldWidth / 100, -10,
-                    globalState.worldWidth / 100, globalState.worldHeight / 100 + 10);
+    defineWorldEdge(0, -10, 0, levelState.worldHeight / 100 + 10);
+    defineWorldEdge(levelState.worldWidth / 100, -10,
+                    levelState.worldWidth / 100, levelState.worldHeight / 100 + 10);
 
-    globalState.pauseLayer = new PIXI.DisplayObjectContainer();
+    levelState.pauseLayer = new PIXI.DisplayObjectContainer();
     var pauseText = new PIXI.Text("PAUSED", {
       font: 'bold 48px Helvetica Neue, Arial, sans-serif',
       fill: 'white',
@@ -107,37 +124,39 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     pauseText.anchor = new PIXI.Point(0.5, 0.5);
     pauseText.x = 500;
     pauseText.y = 300;
-    globalState.pauseLayer.addChild(pauseText);
+    levelState.pauseLayer.addChild(pauseText);
 
-    stage.addChild(globalState.foregroundScrollableLayer);
-    stage.addChild(globalState.pauseLayer);
-    globalState.pauseLayer.visible = false;
+    stage.addChild(levelState.foregroundScrollableLayer);
+    stage.addChild(levelState.pauseLayer);
+    levelState.pauseLayer.visible = false;
+
+    return levelState;
   }
 
-  function gameLoop(globalState, renderer) {
-    var world = globalState.world;
-    var stage = globalState.stage;
+  function gameLoop(globalState, levelState, renderer) {
+    var world = levelState.world;
+    var stage = levelState.stage;
     var stats = globalState.stats;
     var physicsTimestamp = 0;
     var physicsDuration = 1000 / 120; // 120fps
     var inputHandler = globalState.inputHandler;
     function updatePhysics(dt) {
       world.Step(dt / 1000, 3, 2);
-      globalState.physicsObjects.map(function(x) {
+      levelState.physicsObjects.map(function(x) {
         x.physics(dt);
       });
     }
     function updateScrolling() {
-      var characterPos = globalState.character.body.GetPosition();
-      var maxScrollX = -globalState.worldWidth + globalState.screenWidth;
-      var maxScrollY = -globalState.worldHeight + globalState.screenHeight;
+      var characterPos = levelState.character.body.GetPosition();
+      var maxScrollX = -levelState.worldWidth + globalState.screenWidth;
+      var maxScrollY = -levelState.worldHeight + globalState.screenHeight;
       var scrollX = globalState.screenWidth / 2 + characterPos.get_x() * -100;
       var scrollY = globalState.screenHeight / 2 + characterPos.get_y() * -100;
-      globalState.foregroundScrollableLayer.x = Math.min(0, Math.max(maxScrollX, scrollX));
-      globalState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
+      levelState.foregroundScrollableLayer.x = Math.min(0, Math.max(maxScrollX, scrollX));
+      levelState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
     }
     function updateDisplay(dt) {
-      globalState.animatableObjects.map(function(x) { x.animate(dt); });
+      levelState.animatableObjects.map(function(x) { x.animate(dt); });
       updateScrolling();
       globalState.debugGraphics.clear();
       if (globalState.debugDrawActive) {
@@ -148,7 +167,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     var pauseMessageShown = false;
     function tick(currentTimestamp) {
       stats.begin();
-      if (!globalState.paused) {
+      if (!levelState.paused) {
         inputHandler.processInput();
         while (currentTimestamp > physicsTimestamp) {
           physicsTimestamp += physicsDuration;
@@ -156,7 +175,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
         }
         if (pauseMessageShown) {
           pauseMessageShown = false;
-          globalState.pauseLayer.visible = false;
+          levelState.pauseLayer.visible = false;
         }
         updateDisplay(physicsTimestamp - currentTimestamp);
       } else {
@@ -167,12 +186,16 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
         // If first frame after pause, show pause message
         if (!pauseMessageShown) {
           pauseMessageShown = true;
-          globalState.pauseLayer.visible = true;
+          levelState.pauseLayer.visible = true;
           renderer.render(stage);
         }
       }
       stats.end();
-      requestAnimationFrame(tick);
+      if (!levelState.endLevel) {
+        requestAnimationFrame(tick);
+      } else {
+        levelState.onLevelEnded();
+      }
     }
     function captureFirstTimestamp(currentTimestamp) {
       physicsTimestamp = currentTimestamp;
@@ -208,24 +231,12 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
 
   function main() {
     var globalState = {
-      paused: false,
       stats: null,
-      stage: null,
-      world: null,
       inputHandler: null,
       debugDraw: null,
       debugGraphics: null,
-      character: null,
-      animatableObjects: [],
-      physicsObjects: [],
-      backgroundLayer: null,
-      foregroundLayer: null,
-      foregroundScrollableLayer: null,
-      worldWidth: 3000,
-      worldHeight: 600,
       screenWidth: 1000,
-      screenHeight: 600,
-      pauseLayer: null
+      screenHeight: 600
     };
     globalState.inputHandler = new InputHandler();
     globalState.inputHandler.setupInput();
@@ -236,9 +247,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','entities'],
     containerElement.appendChild(globalState.stats.domElement);
     globalState.debugGraphics = new PIXI.Graphics();
     globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
-    setupLevel(globalState);
+    var levelState = createLevel(globalState);
     // let's go
-    gameLoop(globalState, renderer);
+    gameLoop(globalState, levelState, renderer);
   }
 
   return function () {
