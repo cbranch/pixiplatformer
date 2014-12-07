@@ -7,6 +7,7 @@ require.config({
     'debugdraw': 'js/debugdraw',
     'multipledispatch': 'js/multipledispatch',
     'entities': 'js/entities',
+    'level': 'js/level',
     'pixiplatformer': 'js/pixiplatformer'
   },
   shim: {
