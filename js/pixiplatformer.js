@@ -7,6 +7,12 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
   var containerElementId = 'game';
   var debugDrawId = 'debugDraw';
 
+  function setPaused(levelState, down) {
+    if (down) {
+      levelState.paused = !levelState.paused;
+    }
+  }
+
   function gameLoop(globalState, levelState, renderer) {
     var world = levelState.world;
     var stage = levelState.stage;
@@ -122,7 +128,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     containerElement.appendChild(globalState.stats.domElement);
     globalState.debugGraphics = new PIXI.Graphics();
     globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
-    var levelState = Level.createLevel(globalState);
+    var levelState = new Level.Level1(globalState);
+    globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
+      setPaused(levelState, down);
+    });
     // let's go
     gameLoop(globalState, levelState, renderer);
   }
