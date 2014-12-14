@@ -105,29 +105,50 @@ define(['pixi','box2d','entities','inputhandler'],
       stage.addChild(this.pauseLayer);
     }
 
+    var dirtFloorImage = "assets/dirt-floor.png";
+    var level1 = {
+      character: {
+        x: 100,
+        y: 1850
+      },
+      obstacles: [
+        {
+          type: Entities.StaticObstacle,
+          imagePath: dirtFloorImage,
+          width: 3000,
+          height: 64,
+          x: 1500,
+          y: 2000 - 32
+        },
+        {
+          type: Entities.StaticObstacle,
+          imagePath: dirtFloorImage,
+          width: 400,
+          height: 64,
+          x: 600,
+          y: 1500
+        },
+      ]
+    };
+
     module.Level1 = function(globalState) {
+      var self = this;
       Level.call(this, globalState, {
         worldWidth: 3000,
-        worldHeight: 600,
+        worldHeight: 2000,
       });
 
-      var character = new Entities.Character(this.world);
+      var character = new Entities.Character(this.world, level1.character);
       this.foregroundLayer.addChild(character.sprite);
       this.animatableObjects.push(character);
       this.physicsObjects.push(character);
       this.character = character;
       setInputHandlersForCharacter(globalState.inputHandler, this);
 
-      // TODO define level...
-      var dirtFloorOpts = {
-        imagePath: "assets/dirt-floor.png",
-        width: 3000,
-        height: 64,
-        x: 1500,
-        y: 600 - 32
-      };
-      var dirtFloor = new Entities.StaticObstacle(this.world, dirtFloorOpts);
-      this.backgroundLayer.addChild(dirtFloor.sprite);
+      level1.obstacles.forEach(function (opts) {
+        var obstacle = new opts.type(self.world, opts);
+        self.backgroundLayer.addChild(obstacle.sprite);
+      });
     };
 
     return module;

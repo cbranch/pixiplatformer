@@ -51,7 +51,7 @@ define(['pixi','box2d','multipledispatch'],
   };
   FallingState.prototype.restrictMovement = function () { return true; };
 
-  function Character(world) {
+  function Character(world, opts) {
     var characterTexture = PIXI.Texture.fromImage("assets/character.png");
     var sprite = new PIXI.Sprite (characterTexture);
     sprite.anchor.x = 0.5;
@@ -60,7 +60,7 @@ define(['pixi','box2d','multipledispatch'],
 
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_type(Box2D.b2_dynamicBody);
-    bodyDef.set_position(new Box2D.b2Vec2(5, 0));
+    bodyDef.set_position(new Box2D.b2Vec2(opts.x / 100, opts.y / 100));
     bodyDef.set_fixedRotation(true);
     this.body = world.CreateBody(bodyDef);
     this.body.userData = this;
