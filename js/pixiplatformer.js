@@ -7,9 +7,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
   var containerElementId = 'game';
   var debugDrawId = 'debugDraw';
 
-  function setPaused(levelState, down) {
+  function setPaused(globalState, down) {
     if (down) {
-      levelState.paused = !levelState.paused;
+      globalState.paused = !globalState.paused;
     }
   }
 
@@ -47,7 +47,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     var pauseMessageShown = false;
     function tick(currentTimestamp) {
       stats.begin();
-      if (!levelState.paused) {
+      if (!globalState.paused) {
         inputHandler.processInput();
         while (currentTimestamp > physicsTimestamp) {
           physicsTimestamp += physicsDuration;
@@ -117,7 +117,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       debugGraphics: null,
       screenWidth: 1000,
       screenHeight: 600,
-      backgroundColor: backgroundColor
+      backgroundColor: backgroundColor,
+      paused: false
     };
     globalState.inputHandler = new InputHandler();
     globalState.inputHandler.setupInput();
@@ -128,10 +129,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     containerElement.appendChild(globalState.stats.domElement);
     globalState.debugGraphics = new PIXI.Graphics();
     globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
-    var levelState = new Level.Level1(globalState);
     globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
-      setPaused(levelState, down);
+      setPaused(globalState, down);
     });
+    var levelState = new Level.Level1(globalState);
     // let's go
     gameLoop(globalState, levelState, renderer);
   }
