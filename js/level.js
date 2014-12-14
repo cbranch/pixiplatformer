@@ -3,25 +3,21 @@ define(['pixi','box2d','entities','inputhandler'],
 
     var module = {};
 
-    function postSolve(contactPtr, impulsePtr) {
+    function beginContact(contactPtr) {
       var contact = Box2D.wrapPointer(contactPtr, Box2D.b2Contact);
-      var impulse = Box2D.wrapPointer(impulsePtr, Box2D.b2ContactImpulse);
-      var nImpulses = impulse.get_count();
-      var impulses = [];
-      for (var i = 0; i < nImpulses; i++) {
-        impulses.push(Box2D.getValue(impulsePtr + i * 4, "float"));
+      if (contact.IsTouching()) {
+        var objA = contact.GetFixtureA().GetBody().userData;
+        var objB = contact.GetFixtureB().GetBody().userData;
+        objA.handleCollision(objB);
       }
-      var objA = contact.GetFixtureA().GetBody().userData;
-      var objB = contact.GetFixtureB().GetBody().userData;
-      objA.handleCollision(objB);
     }
 
     function createContactListener() {
       var contactListener = new Box2D.JSContactListener();
-      contactListener.BeginContact = function (_) {};
+      contactListener.BeginContact = beginContact;
       contactListener.EndContact = function (_) {};
       contactListener.PreSolve  = function (contact, manifold) {};
-      contactListener.PostSolve = postSolve;
+      contactListener.PostSolve = function (contactPtr, impulsePtr) {};
       return contactListener;
     }
 
