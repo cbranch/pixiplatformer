@@ -128,20 +128,26 @@ define(['pixi','box2d','multipledispatch'],
     this.movingRight = down;
   };
 
-  function StaticObject(o) {
+  function StaticObject(world, o) {
     var texture = PIXI.Texture.fromImage(o.imagePath);
     var sprite = new PIXI.TilingSprite (texture, o.width, o.height);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
     this.sprite = sprite;
     this.sprite.position.set(o.x, o.y);
+    if ('angle' in o) {
+      this.sprite.rotation = o.angle;
+    }
   }
 
   function StaticObstacle(world, o) {
-    StaticObject.call(this, o);
+    StaticObject.call(this, world, o);
 
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_position(new Box2D.b2Vec2(o.x / 100, o.y / 100));
+    if ('angle' in o) {
+      bodyDef.set_angle(o.angle);
+    }
     this.body = world.CreateBody(bodyDef);
     this.body.userData = this;
     var shapeDef = new Box2D.b2PolygonShape();
@@ -150,6 +156,12 @@ define(['pixi','box2d','multipledispatch'],
   }
   StaticObstacle.prototype = Object.create (StaticObject.prototype);
   StaticObstacle.prototype.constructor = StaticObstacle;
+
+  function StaticPlatform(world, o) {
+    StaticObstacle.call(this, world, o);
+  }
+  StaticPlatform.prototype = Object.create (StaticObject.prototype);
+  StaticPlatform.prototype.constructor = StaticObstacle;
 
   Character.prototype.handleCollision = Match(
     MatchTypes(
@@ -172,6 +184,15 @@ define(['pixi','box2d','multipledispatch'],
     )
   );
 
+  StaticPlatform.prototype.handleCollision = Match(
+    MatchTypes(
+      instanceOf(Character),
+      function (character) {
+        character.handleCollision(this);
+      }
+    )
+  );
+
   function WorldEdge() {
   }
   WorldEdge.prototype.handleCollision = function (o) {
@@ -184,6 +205,7 @@ define(['pixi','box2d','multipledispatch'],
     Character: Character,
     StaticObject: StaticObject,
     StaticObstacle: StaticObstacle,
+    StaticPlatform: StaticPlatform,
     WorldEdge: WorldEdge
   };
 });
