@@ -165,7 +165,7 @@ define(['pixi','box2d','multipledispatch'],
 
   Character.prototype.handleCollision = Match(
     MatchTypes(
-      instanceOf(StaticObstacle),
+      instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
       function (staticObject) {
         var newState = this.jumpState.onFloor();
         if (newState) {
@@ -177,27 +177,27 @@ define(['pixi','box2d','multipledispatch'],
 
   StaticObstacle.prototype.handleCollision = Match(
     MatchTypes(
-      instanceOf(Character),
-      function (character) {
-        character.handleCollision(this);
+      instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (character, contact) {
+        character.handleCollision(this, contact);
       }
     )
   );
 
   StaticPlatform.prototype.handleCollision = Match(
     MatchTypes(
-      instanceOf(Character),
-      function (character) {
-        character.handleCollision(this);
+      instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (character, contact) {
+        character.handleCollision(this, contact);
       }
     )
   );
 
   function WorldEdge() {
   }
-  WorldEdge.prototype.handleCollision = function (o) {
+  WorldEdge.prototype.handleCollision = function (o, contact) {
     if (!(o instanceof WorldEdge)) {
-      o.handleCollision (this);
+      o.handleCollision (this, contact);
     }
   };
 

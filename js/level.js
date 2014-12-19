@@ -8,7 +8,7 @@ define(['pixi','box2d','entities','inputhandler'],
       if (contact.IsTouching()) {
         var objA = contact.GetFixtureA().GetBody().userData;
         var objB = contact.GetFixtureB().GetBody().userData;
-        objA.handleCollision(objB);
+        objA.handleCollision(objB, contact);
       }
     }
 
