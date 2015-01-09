@@ -120,8 +120,8 @@ define(['pixi','box2d','entities','inputhandler'],
       this.backgroundLayer = new PIXI.DisplayObjectContainer();
       this.foregroundLayer = new PIXI.DisplayObjectContainer();
       this.foregroundScrollableLayer = new PIXI.DisplayObjectContainer();
-      this.foregroundScrollableLayer.addChild(this.foregroundLayer);
       this.foregroundScrollableLayer.addChild(this.backgroundLayer);
+      this.foregroundScrollableLayer.addChild(this.foregroundLayer);
       this.foregroundScrollableLayer.addChild(globalState.debugGraphics);
       stage.addChild(this.foregroundScrollableLayer);
       var pauseText = new PIXI.Text("PAUSED", {
