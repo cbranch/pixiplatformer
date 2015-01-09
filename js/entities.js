@@ -70,7 +70,7 @@ define(['pixi','box2d','multipledispatch'],
     bodyFixtureDef.set_shape(characterBodyShape);
     bodyFixtureDef.set_friction(1.0);
     bodyFixtureDef.set_density(1.0);
-    this.body.CreateFixture(bodyFixtureDef);
+    this.bodyFixture = this.body.CreateFixture(bodyFixtureDef);
     var characterFeetShape = new Box2D.b2CircleShape();
     characterFeetShape.set_m_p(new Box2D.b2Vec2(0.0, 0.490));
     characterFeetShape.set_m_radius(0.335);
@@ -78,11 +78,12 @@ define(['pixi','box2d','multipledispatch'],
     feetFixtureDef.set_shape(characterFeetShape);
     feetFixtureDef.set_friction(1.0);
     feetFixtureDef.set_density(1.0);
-    this.body.CreateFixture(feetFixtureDef);
+    this.feetFixture = this.body.CreateFixture(feetFixtureDef);
 
     this.jumpState = new FallingState(this);
     this.movingLeft = false;
     this.movingRight = false;
+    this.movingDown = false;
   }
   Character.prototype.physics = function(dt) {
     var newState = this.jumpState.physics(dt, this);
@@ -127,6 +128,9 @@ define(['pixi','box2d','multipledispatch'],
   Character.prototype.moveRight = function(down) {
     this.movingRight = down;
   };
+  Character.prototype.moveDown = function(down) {
+    this.movingDown = down;
+  };
 
   function StaticObject(world, o) {
     var texture = PIXI.Texture.fromImage(o.imagePath);
@@ -140,16 +144,21 @@ define(['pixi','box2d','multipledispatch'],
     }
   }
 
-  function StaticObstacle(world, o) {
-    StaticObject.call(this, world, o);
-
+  function initializeBody(obj, world, o) {
     var bodyDef = new Box2D.b2BodyDef();
     bodyDef.set_position(new Box2D.b2Vec2(o.x / 100, o.y / 100));
     if ('angle' in o) {
       bodyDef.set_angle(o.angle);
     }
-    this.body = world.CreateBody(bodyDef);
-    this.body.userData = this;
+    var body = world.CreateBody(bodyDef);
+    body.userData = obj;
+    return body;
+  }
+
+  function StaticObstacle(world, o) {
+    StaticObject.call(this, world, o);
+
+    this.body = initializeBody(this, world, o);
     var shapeDef = new Box2D.b2PolygonShape();
     shapeDef.SetAsBox(o.width / 200, o.height / 200);
     this.body.CreateFixture(shapeDef, 1.0);
@@ -158,7 +167,19 @@ define(['pixi','box2d','multipledispatch'],
   StaticObstacle.prototype.constructor = StaticObstacle;
 
   function StaticPlatform(world, o) {
-    StaticObstacle.call(this, world, o);
+    StaticObject.call(this, world, o);
+
+    this.body = initializeBody(this, world, o);
+    var shapeDef = new Box2D.b2PolygonShape();
+    shapeDef.SetAsBox(o.width / 200, o.height / 200);
+    this.body.CreateFixture(shapeDef, 1.0);
+    var sensorDef = new Box2D.b2PolygonShape();
+    sensorDef.SetAsBox(o.width / 200, 0.1, new Box2D.b2Vec2 (0.0, -o.height / 200 - 0.1), 0.0);
+    var sensorFixtureDef = new Box2D.b2FixtureDef();
+    sensorFixtureDef.set_shape(sensorDef);
+    sensorFixtureDef.set_isSensor(true);
+    sensorFixtureDef.set_density(1.0);
+    this.sensorFixture = this.body.CreateFixture(sensorFixtureDef);
   }
   StaticPlatform.prototype = Object.create (StaticObject.prototype);
   StaticPlatform.prototype.constructor = StaticObstacle;
@@ -170,6 +191,64 @@ define(['pixi','box2d','multipledispatch'],
         var newState = this.jumpState.onFloor();
         if (newState) {
           this.jumpState = newState;
+        }
+      }
+    ),
+    MatchTypes(
+      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      function (platform, contact) {
+        if (this.movingDown) {
+          contact.disableThisStep = true;
+        }
+        if ((contact.GetFixtureA() == this.feetFixture) ||
+            (contact.GetFixtureB() == this.feetFixture)) {
+          if ((contact.GetFixtureA() == platform.sensorFixture) ||
+              (contact.GetFixtureB() == platform.sensorFixture)) {
+            platform.supportPlayer = true;
+          } else {
+            var yVelocity = this.body.GetLinearVelocity().get_y();
+            if (yVelocity < -1) {
+              contact.disableThisStep = true;
+              return;
+            } else {
+              if (platform.supportPlayer !== true) {
+                contact.disableThisStep = true;
+                return;
+              }
+            }
+            var newState = this.jumpState.onFloor();
+            if (newState) {
+              this.jumpState = newState;
+            }
+          }
+        } else {
+          contact.disableThisStep = true;
+        }
+      }
+    )
+  );
+
+  Character.prototype.handleCollisionContinuous = Match(
+    MatchTypes(
+      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      function (platform, contact) {
+        if (this.movingDown) {
+          platform.supportPlayer = false;
+          contact.disableThisStep = true;
+        }
+      }
+    )
+  );
+
+  Character.prototype.handleCollisionEnd = Match(
+    MatchTypes(
+      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      function (platform, contact) {
+        if (((contact.GetFixtureA() == platform.sensorFixture) &&
+            (contact.GetFixtureB() == this.feetFixture)) ||
+            ((contact.GetFixtureB() == platform.sensorFixture) &&
+            (contact.GetFixtureA() == this.feetFixture))) {
+          platform.supportPlayer = false;
         }
       }
     )
@@ -195,11 +274,6 @@ define(['pixi','box2d','multipledispatch'],
 
   function WorldEdge() {
   }
-  WorldEdge.prototype.handleCollision = function (o, contact) {
-    if (!(o instanceof WorldEdge)) {
-      o.handleCollision (this, contact);
-    }
-  };
 
   return {
     Character: Character,

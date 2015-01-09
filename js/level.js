@@ -8,15 +8,45 @@ define(['pixi','box2d','entities','inputhandler'],
       if (contact.IsTouching()) {
         var objA = contact.GetFixtureA().GetBody().userData;
         var objB = contact.GetFixtureB().GetBody().userData;
-        objA.handleCollision(objB, contact);
+        if ('handleCollision' in objA) {
+          objA.handleCollision(objB, contact);
+        } else {
+          objB.handleCollision(objA, contact);
+        }
+      }
+    }
+
+    function endContact(contactPtr) {
+      var contact = Box2D.wrapPointer(contactPtr, Box2D.b2Contact);
+      delete contact.disableThisStep;
+      var objA = contact.GetFixtureA().GetBody().userData;
+      var objB = contact.GetFixtureB().GetBody().userData;
+      if ('handleCollisionEnd' in objA) {
+        objA.handleCollisionEnd(objB, contact);
+      } else {
+        objB.handleCollisionEnd(objA, contact);
+      }
+    }
+
+    function preSolve(contactPtr, manifold) {
+      var contact = Box2D.wrapPointer(contactPtr, Box2D.b2Contact);
+      var objA = contact.GetFixtureA().GetBody().userData;
+      var objB = contact.GetFixtureB().GetBody().userData;
+      if ('handleCollisionContinuous' in objA) {
+        objA.handleCollisionContinuous(objB, contact);
+      } else {
+        objB.handleCollisionContinuous(objA, contact);
+      }
+      if (contact.disableThisStep) {
+        contact.SetEnabled(false);
       }
     }
 
     function createContactListener() {
       var contactListener = new Box2D.JSContactListener();
       contactListener.BeginContact = beginContact;
-      contactListener.EndContact = function (_) {};
-      contactListener.PreSolve  = function (contact, manifold) {};
+      contactListener.EndContact = endContact;
+      contactListener.PreSolve  = preSolve;
       contactListener.PostSolve = function (contactPtr, impulsePtr) {};
       return contactListener;
     }
@@ -38,7 +68,11 @@ define(['pixi','box2d','entities','inputhandler'],
         }
       });
       inputHandler.setHandler(InputHandler.KEY_UP, function(down) {});
-      inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {});
+      inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {
+        if (levelState.character) {
+          levelState.character.moveDown(down);
+        }
+      });
     }
 
     function defineWorldEdge(world, x1, y1, x2, y2) {

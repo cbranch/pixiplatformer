@@ -39,7 +39,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       levelState.animatableObjects.map(function(x) { x.animate(dt); });
       updateScrolling();
       globalState.debugGraphics.clear();
-      if (globalState.debugDrawActive) {
+      if (globalState.debugDraw.enable) {
         world.DrawDebugData();
       }
       renderer.render(stage);
