@@ -166,6 +166,7 @@ define(['pixi','box2d','entities','inputhandler'],
 
     var dirtFloorImage = "assets/dirt-floor.png";
     var dirtImage = "assets/dirt.png";
+    var collectableImage = "assets/collectable.png";
     module.levels = [];
     module.levels[0] = {
       world: {
@@ -235,6 +236,12 @@ define(['pixi','box2d','entities','inputhandler'],
           x: 2400,
           y: 2000 - 96
         },
+      ],
+      collectables: [
+        {
+          x: 192,
+          y: 2000 - 300
+        }
       ]
     };
 
@@ -252,6 +259,17 @@ define(['pixi','box2d','entities','inputhandler'],
       level.obstacles.forEach(function (opts) {
         var obstacle = new opts.type(self.world, opts);
         self.backgroundLayer.addChild(obstacle.sprite);
+      });
+      level.collectables.forEach(function (opts) {
+        var finalOpts = {
+          imagePath: collectableImage,
+          width: 32,
+          height: 32,
+        };
+        finalOpts.x = opts.x;
+        finalOpts.y = opts.y;
+        var collectable = new Entities.Collectable(self.world, finalOpts);
+        self.backgroundLayer.addChild(collectable.sprite);
       });
     };
 

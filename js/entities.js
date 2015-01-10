@@ -84,7 +84,7 @@ define(['pixi','box2d','multipledispatch'],
     this.movingLeft = false;
     this.movingRight = false;
     this.movingDown = false;
-    this.collectables = 12;
+    this.collectables = 0;
   }
   Character.prototype.physics = function(dt) {
     var newState = this.jumpState.physics(dt, this);
@@ -184,6 +184,21 @@ define(['pixi','box2d','multipledispatch'],
   }
   StaticPlatform.prototype = Object.create (StaticObject.prototype);
   StaticPlatform.prototype.constructor = StaticObstacle;
+
+  function Collectable(world, o) {
+    StaticObject.call(this, world, o);
+
+    this.body = initializeBody(this, world, o);
+    var sensorDef = new Box2D.b2PolygonShape();
+    sensorDef.SetAsBox(o.width / 200, o.height / 200);
+    var sensorFixtureDef = new Box2D.b2FixtureDef();
+    sensorFixtureDef.set_shape(sensorDef);
+    sensorFixtureDef.set_isSensor(true);
+    sensorFixtureDef.set_density(1.0);
+    this.sensorFixture = this.body.CreateFixture(sensorFixtureDef);
+  }
+  Collectable.prototype = Object.create (StaticObject.prototype);
+  Collectable.prototype.constructor = StaticObstacle;
 
   function characterStaticCollision(character, staticObject) {
     var newState = character.jumpState.onFloor();
@@ -287,6 +302,7 @@ define(['pixi','box2d','multipledispatch'],
     StaticObject: StaticObject,
     StaticObstacle: StaticObstacle,
     StaticPlatform: StaticPlatform,
+    Collectable: Collectable,
     WorldEdge: WorldEdge,
     handleCollision: handleCollision,
     handleCollisionContinuous: handleCollisionContinuous,
