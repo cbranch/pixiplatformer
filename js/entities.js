@@ -15,7 +15,7 @@ define(['pixi','box2d','multipledispatch'],
   };
   ReadyToJumpState.prototype.physics = function(dt, actor) {
     if (this.startJump) {
-      actor.body.ApplyLinearImpulse(new Box2D.b2Vec2(0, -6), actor.body.GetWorldCenter());
+      actor.body.ApplyLinearImpulse(new Box2D.b2Vec2(0, -8), actor.body.GetWorldCenter());
       return new JumpingState();
     }
   };

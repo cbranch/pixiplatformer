@@ -97,7 +97,7 @@ define(['pixi','box2d','entities','inputhandler'],
       this.endLevel = false;
       this.onLevelEnded = function () {};
       // setup box2d
-      var world = new Box2D.b2World(new Box2D.b2Vec2(0, 9.8));
+      var world = new Box2D.b2World(new Box2D.b2Vec2(0, 18.0));
       this.world = world;
       world.SetContactListener(createContactListener());
       world.SetDebugDraw(globalState.debugDraw);
