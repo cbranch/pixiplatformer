@@ -112,6 +112,7 @@ define(['pixi','box2d','entities','inputhandler'],
       this.worldHeight = o.worldHeight;
       this.character = null;
       this.animatableObjects = [];
+      this.animatableObjectsToRemove = [];
       this.physicsObjects = [];
       this.backgroundLayer = null;
       this.foregroundLayer = null;
@@ -163,6 +164,18 @@ define(['pixi','box2d','entities','inputhandler'],
       this.pauseLayer.visible = false;
       stage.addChild(this.pauseLayer);
     }
+    Level.prototype.removeAnimatableObject = function (o) {
+      this.animatableObjectsToRemove.push(o);
+    };
+    Level.prototype.purgeRemovedAnimatableObjects = function () {
+      var self = this;
+      this.animatableObjectsToRemove.forEach(function (o) {
+        var i = self.animatableObjects.indexOf(o);
+        if (i != -1) {
+          self.animatableObjects.splice(i, 1);
+        }
+      });
+    };
 
     var dirtFloorImage = "assets/dirt-floor.png";
     var dirtImage = "assets/dirt.png";
@@ -240,8 +253,24 @@ define(['pixi','box2d','entities','inputhandler'],
       collectables: [
         {
           x: 192,
-          y: 2000 - 300
-        }
+          y: 2000 - 192
+        },
+        {
+          x: 256,
+          y: 2000 - 192
+        },
+        {
+          x: 320,
+          y: 2000 - 192
+        },
+        {
+          x: 384,
+          y: 2000 - 192
+        },
+        {
+          x: 448,
+          y: 2000 - 192
+        },
       ]
     };
 
@@ -270,8 +299,11 @@ define(['pixi','box2d','entities','inputhandler'],
         finalOpts.y = opts.y;
         var collectable = new Entities.Collectable(self.world, finalOpts);
         self.backgroundLayer.addChild(collectable.sprite);
+        self.animatableObjects.push(collectable);
       });
     };
+    module.GameLevel.prototype = Object.create (Level.prototype);
+    module.GameLevel.prototype.constructor = module.GameLevel;
 
     return module;
   });

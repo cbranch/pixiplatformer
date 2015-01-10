@@ -36,7 +36,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       levelState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
     }
     function updateDisplay(dt) {
-      levelState.animatableObjects.map(function(x) { x.animate(dt); });
+      levelState.animatableObjects.map(function(x) { x.animate(dt, levelState); });
+      levelState.purgeRemovedAnimatableObjects();
       updateScrolling();
       globalState.debugGraphics.clear();
       if (globalState.debugDraw.enable) {

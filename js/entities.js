@@ -196,6 +196,18 @@ define(['pixi','box2d','multipledispatch'],
     sensorFixtureDef.set_isSensor(true);
     sensorFixtureDef.set_density(1.0);
     this.sensorFixture = this.body.CreateFixture(sensorFixtureDef);
+    this.collected = false;
+
+    var self = this;
+    self.animate = function (dt, levelState) {
+      if (self.collected) {
+        self.body.GetWorld().DestroyBody(self.body);
+        self.body = undefined;
+        self.sprite.parent.removeChild(self.sprite);
+        self.sprite = undefined;
+        levelState.removeAnimatableObject(self);
+      }
+    };
   }
   Collectable.prototype = Object.create (StaticObject.prototype);
   Collectable.prototype.constructor = StaticObstacle;
@@ -237,6 +249,13 @@ define(['pixi','box2d','multipledispatch'],
     }
   }
 
+  function characterCollectableCollision(character, collectable, contact) {
+    if (!collectable.collected) {
+      collectable.collected = true;
+      character.collectables++;
+    }
+  }
+
   var handleCollision = Match(
     MatchTypes(
       instanceOf(Character), instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
@@ -253,6 +272,14 @@ define(['pixi','box2d','multipledispatch'],
     MatchTypes(
       instanceOf(StaticPlatform), instanceOf(Character), instanceOf(Box2D.b2Contact),
       function (a, b, contact) { characterPlatformCollision(b, a, contact); }
+    ),
+    MatchTypes(
+      instanceOf(Character), instanceOf(Collectable), instanceOf(Box2D.b2Contact),
+      characterCollectableCollision
+    ),
+    MatchTypes(
+      instanceOf(Collectable), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterCollectableCollision(b, a, contact); }
     )
   );
 
