@@ -8,11 +8,7 @@ define(['pixi','box2d','entities','inputhandler'],
       if (contact.IsTouching()) {
         var objA = contact.GetFixtureA().GetBody().userData;
         var objB = contact.GetFixtureB().GetBody().userData;
-        if ('handleCollision' in objA) {
-          objA.handleCollision(objB, contact);
-        } else {
-          objB.handleCollision(objA, contact);
-        }
+        Entities.handleCollision(objA, objB, contact);
       }
     }
 
@@ -21,22 +17,14 @@ define(['pixi','box2d','entities','inputhandler'],
       delete contact.disableThisStep;
       var objA = contact.GetFixtureA().GetBody().userData;
       var objB = contact.GetFixtureB().GetBody().userData;
-      if ('handleCollisionEnd' in objA) {
-        objA.handleCollisionEnd(objB, contact);
-      } else {
-        objB.handleCollisionEnd(objA, contact);
-      }
+      Entities.handleCollisionEnd(objA, objB, contact);
     }
 
     function preSolve(contactPtr, manifold) {
       var contact = Box2D.wrapPointer(contactPtr, Box2D.b2Contact);
       var objA = contact.GetFixtureA().GetBody().userData;
       var objB = contact.GetFixtureB().GetBody().userData;
-      if ('handleCollisionContinuous' in objA) {
-        objA.handleCollisionContinuous(objB, contact);
-      } else {
-        objB.handleCollisionContinuous(objA, contact);
-      }
+      Entities.handleCollisionContinuous(objA, objB, contact);
       if (contact.disableThisStep) {
         contact.SetEnabled(false);
       }

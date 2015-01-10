@@ -184,91 +184,97 @@ define(['pixi','box2d','multipledispatch'],
   StaticPlatform.prototype = Object.create (StaticObject.prototype);
   StaticPlatform.prototype.constructor = StaticObstacle;
 
-  Character.prototype.handleCollision = Match(
-    MatchTypes(
-      instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
-      function (staticObject) {
-        var newState = this.jumpState.onFloor();
+  function characterStaticCollision(character, staticObject) {
+    var newState = character.jumpState.onFloor();
+    if (newState) {
+      character.jumpState = newState;
+    }
+  }
+
+  function characterPlatformCollision(character, platform, contact) {
+    if (character.movingDown) {
+      contact.disableThisStep = true;
+    }
+    if ((contact.GetFixtureA() == character.feetFixture) ||
+        (contact.GetFixtureB() == character.feetFixture)) {
+      if ((contact.GetFixtureA() == platform.sensorFixture) ||
+          (contact.GetFixtureB() == platform.sensorFixture)) {
+        platform.supportPlayer = true;
+      } else {
+        var yVelocity = character.body.GetLinearVelocity().get_y();
+        if (yVelocity < -1) {
+          contact.disableThisStep = true;
+          return;
+        } else {
+          if (platform.supportPlayer !== true) {
+            contact.disableThisStep = true;
+            return;
+          }
+        }
+        var newState = character.jumpState.onFloor();
         if (newState) {
-          this.jumpState = newState;
+          character.jumpState = newState;
         }
       }
+    } else {
+      contact.disableThisStep = true;
+    }
+  }
+
+  var handleCollision = Match(
+    MatchTypes(
+      instanceOf(Character), instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
+      characterStaticCollision
     ),
     MatchTypes(
-      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
-      function (platform, contact) {
-        if (this.movingDown) {
-          contact.disableThisStep = true;
-        }
-        if ((contact.GetFixtureA() == this.feetFixture) ||
-            (contact.GetFixtureB() == this.feetFixture)) {
-          if ((contact.GetFixtureA() == platform.sensorFixture) ||
-              (contact.GetFixtureB() == platform.sensorFixture)) {
-            platform.supportPlayer = true;
-          } else {
-            var yVelocity = this.body.GetLinearVelocity().get_y();
-            if (yVelocity < -1) {
-              contact.disableThisStep = true;
-              return;
-            } else {
-              if (platform.supportPlayer !== true) {
-                contact.disableThisStep = true;
-                return;
-              }
-            }
-            var newState = this.jumpState.onFloor();
-            if (newState) {
-              this.jumpState = newState;
-            }
-          }
-        } else {
-          contact.disableThisStep = true;
-        }
-      }
+      instanceOf(StaticObstacle), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterStaticCollision(b, a, contact); }
+    ),
+    MatchTypes(
+      instanceOf(Character), instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      characterPlatformCollision
+    ),
+    MatchTypes(
+      instanceOf(StaticPlatform), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterPlatformCollision(b, a, contact); }
     )
   );
 
-  Character.prototype.handleCollisionContinuous = Match(
+  function characterPlatformCollisionContinuous(character, platform, contact) {
+    if (character.movingDown) {
+      platform.supportPlayer = false;
+      contact.disableThisStep = true;
+    }
+  }
+
+  var handleCollisionContinuous = Match(
     MatchTypes(
-      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
-      function (platform, contact) {
-        if (this.movingDown) {
-          platform.supportPlayer = false;
-          contact.disableThisStep = true;
-        }
-      }
+      instanceOf(Character), instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      characterPlatformCollisionContinuous
+    ),
+    MatchTypes(
+      instanceOf(StaticPlatform), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterPlatformCollisionContinuous(b, a, contact); }
     )
   );
 
-  Character.prototype.handleCollisionEnd = Match(
-    MatchTypes(
-      instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
-      function (platform, contact) {
-        if (((contact.GetFixtureA() == platform.sensorFixture) &&
-            (contact.GetFixtureB() == this.feetFixture)) ||
-            ((contact.GetFixtureB() == platform.sensorFixture) &&
-            (contact.GetFixtureA() == this.feetFixture))) {
-          platform.supportPlayer = false;
-        }
-      }
-    )
-  );
+  function characterHandleCollisionEnd(character, platform, contact) {
+    if (((contact.GetFixtureA() == platform.sensorFixture) &&
+        (contact.GetFixtureB() == character.feetFixture)) ||
+        ((contact.GetFixtureB() == platform.sensorFixture) &&
+        (contact.GetFixtureA() == character.feetFixture))) {
+      platform.supportPlayer = false;
+    }
+  }
 
-  StaticObstacle.prototype.handleCollision = Match(
+  var handleCollisionEnd = Match(
     MatchTypes(
-      instanceOf(Character), instanceOf(Box2D.b2Contact),
-      function (character, contact) {
-        character.handleCollision(this, contact);
-      }
-    )
-  );
-
-  StaticPlatform.prototype.handleCollision = Match(
+      instanceOf(Character), instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
+      characterHandleCollisionEnd
+    ),
     MatchTypes(
-      instanceOf(Character), instanceOf(Box2D.b2Contact),
-      function (character, contact) {
-        character.handleCollision(this, contact);
-      }
+      instanceOf(StaticPlatform), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterHandleCollisionEnd(b, a, contact); }
     )
   );
 
@@ -280,6 +286,9 @@ define(['pixi','box2d','multipledispatch'],
     StaticObject: StaticObject,
     StaticObstacle: StaticObstacle,
     StaticPlatform: StaticPlatform,
-    WorldEdge: WorldEdge
+    WorldEdge: WorldEdge,
+    handleCollision: handleCollision,
+    handleCollisionContinuous: handleCollisionContinuous,
+    handleCollisionEnd: handleCollisionEnd
   };
 });
