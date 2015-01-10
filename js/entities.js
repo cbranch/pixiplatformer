@@ -64,6 +64,7 @@ define(['pixi','box2d','multipledispatch'],
     bodyDef.set_fixedRotation(true);
     this.body = world.CreateBody(bodyDef);
     this.body.userData = this;
+    this.body.SetSleepingAllowed(false);
     var characterBodyShape = new Box2D.b2PolygonShape();
     characterBodyShape.SetAsBox(0.335, 0.490);
     var bodyFixtureDef = new Box2D.b2FixtureDef();
