@@ -84,6 +84,7 @@ define(['pixi','box2d','multipledispatch'],
     this.movingLeft = false;
     this.movingRight = false;
     this.movingDown = false;
+    this.collectables = 12;
   }
   Character.prototype.physics = function(dt) {
     var newState = this.jumpState.physics(dt, this);

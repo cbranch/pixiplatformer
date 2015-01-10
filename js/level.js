@@ -81,7 +81,29 @@ define(['pixi','box2d','entities','inputhandler'],
       defineWorldEdge(world, width, -10, width, height + 10);
     }
 
+    function CollectableText(globalState, getCoinsCallback) {
+      var self = this;
+      self.pixiObject = new PIXI.Text('Coins: 0 / 30', {
+        font: '24px Helvetica Neue, Arial, sans-serif',
+        fill: 'white'
+      });
+      self.pixiObject.anchor = new PIXI.Point(0.5, 0);
+      self.pixiObject.x = globalState.screenWidth / 2;
+      self.pixiObject.y = globalState.screenHeight - 36;
+      self.getCoinsCallback = getCoinsCallback;
+      self.previousValue = 0;
+
+      self.animate = function (dt) {
+        var newValue = self.getCoinsCallback();
+        if (self.previousValue != newValue) {
+          self.previousValue = newValue;
+          self.pixiObject.setText('Coins: ' + newValue + ' / 30');
+        }
+      };
+    }
+
     function Level(globalState, o) {
+      var self = this;
       this.globalState = globalState;
       this.paused = false;
       this.pauseLayer = null;
@@ -94,6 +116,9 @@ define(['pixi','box2d','entities','inputhandler'],
       this.backgroundLayer = null;
       this.foregroundLayer = null;
       this.foregroundScrollableLayer = null;
+      this.hudLayer = null;
+      this.collectableText = null;
+      this.maxCollectables = 30;
       this.endLevel = false;
       this.onLevelEnded = function () {};
       // setup box2d
@@ -111,7 +136,19 @@ define(['pixi','box2d','entities','inputhandler'],
       this.foregroundScrollableLayer.addChild(this.backgroundLayer);
       this.foregroundScrollableLayer.addChild(this.foregroundLayer);
       this.foregroundScrollableLayer.addChild(globalState.debugGraphics);
+      // BEGIN HUD
+      this.hudLayer = new PIXI.DisplayObjectContainer();
+      this.hudBackground = new PIXI.Graphics();
+      this.hudBackground.beginFill(0x000022, 1.0);
+      this.hudBackground.drawRect(0, globalState.screenHeight - 48, globalState.screenWidth, 48);
+      this.hudBackground.endFill();
+      this.hudLayer.addChild(this.hudBackground);
+      this.collectableText = new CollectableText(globalState, function () { return self.character.collectables; });
+      this.animatableObjects.push(this.collectableText);
+      this.hudLayer.addChild(this.collectableText.pixiObject);
+      // END HUD
       stage.addChild(this.foregroundScrollableLayer);
+      stage.addChild(this.hudLayer);
       var pauseText = new PIXI.Text("PAUSED", {
         font: 'bold 48px Helvetica Neue, Arial, sans-serif',
         fill: 'white',
