@@ -2,6 +2,7 @@ define(function() {
   function InputHandler() {
     this.keyPressesSinceLastFrame = [];
     this.keyPressHandlers = [];
+    this.synchronousHandling = [];
     for (var i = 0; i < this.KEY_LAST; i++) {
       this.keyPressHandlers.push(function() {});
     }
@@ -61,7 +62,11 @@ define(function() {
         var event = window.event ? window.event : e;
         var keyType = self.mapKeyCodeToLogicalCode(event.keyCode);
         if (typeof keyType != "undefined") {
-          self.keyPressesSinceLastFrame.push([keyType, keyPressType]);
+          if (self.synchronousHandling.indexOf(keyType) != -1) {
+            self.keyPressHandlers[keyType](keyPressType);
+          } else {
+            self.keyPressesSinceLastFrame.push([keyType, keyPressType]);
+          }
           return false;
         } else {
           return true;
@@ -72,8 +77,11 @@ define(function() {
     window.onkeyup = handleKeyCode(false);
   };
 
-  InputHandler.prototype.setHandler = function(keyCode, callback) {
+  InputHandler.prototype.setHandler = function(keyCode, callback, isSynchronous) {
     this.keyPressHandlers[keyCode] = callback;
+    if (isSynchronous) {
+      this.synchronousHandling.push(keyCode);
+    }
   };
 
   return InputHandler;

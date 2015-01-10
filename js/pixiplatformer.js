@@ -9,6 +9,9 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
 
   function setPaused(globalState, down) {
     if (down) {
+      if (globalState.paused) {
+        globalState.unsuspendLoop();
+      }
       globalState.paused = !globalState.paused;
     }
   }
@@ -48,6 +51,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     var pauseMessageShown = false;
     function tick(currentTimestamp) {
       stats.begin();
+      var suspendedLoop = false;
       if (!globalState.paused) {
         inputHandler.processInput();
         while (currentTimestamp > physicsTimestamp) {
@@ -60,19 +64,17 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
         }
         updateDisplay(physicsTimestamp - currentTimestamp);
       } else {
-        // Pause physics
-        physicsTimestamp = currentTimestamp;
-        // Allow unpause
-        inputHandler.processInputSelectively([InputHandler.KEY_P]);
         // If first frame after pause, show pause message
-        if (!pauseMessageShown) {
-          pauseMessageShown = true;
-          levelState.pauseLayer.visible = true;
-          renderer.render(stage);
-        }
+        pauseMessageShown = true;
+        levelState.pauseLayer.visible = true;
+        renderer.render(stage);
+        suspendedLoop = true;
+        globalState.unsuspendLoop = function () {
+          requestAnimationFrame(captureFirstTimestamp);
+        };
       }
       stats.end();
-      if (!levelState.endLevel) {
+      if (!levelState.endLevel && !suspendedLoop) {
         requestAnimationFrame(tick);
       } else {
         levelState.onLevelEnded();
@@ -132,7 +134,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
     globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
       setPaused(globalState, down);
-    });
+    }, true);
     var levelState = new Level.GameLevel(globalState, Level.levels[0]);
     // let's go
     gameLoop(globalState, levelState, renderer);
