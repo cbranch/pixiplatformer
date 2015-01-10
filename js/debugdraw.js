@@ -5,10 +5,10 @@ define(['pixi','box2d'], function(PIXI, Box2D) {
   function getPIXIDebugDraw(graphics, scale) {
     function getColorFromDebugDrawCallback(color) {
       var col = Box2D.wrapPointer(color, Box2D.b2Color);
-      var red = (col.get_r() * 255)|0;
-      var green = (col.get_g() * 255)|0;
+      var red = (col.get_r() * 255 * 255 * 255)|0;
+      var green = (col.get_g() * 255 * 255)|0;
       var blue = (col.get_b() * 255)|0;
-      return "#" + red + "," + green + "," + blue;
+      return red + green + blue;
     }
     function drawSegment(graphics, vert1, vert2, color) {
       var vert1V = Box2D.wrapPointer(vert1, Box2D.b2Vec2);
