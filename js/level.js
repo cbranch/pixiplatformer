@@ -81,7 +81,7 @@ define(['pixi','box2d','entities','inputhandler'],
       defineWorldEdge(world, width, -10, width, height + 10);
     }
 
-    function CollectableText(globalState, getCoinsCallback) {
+    function CollectableText(globalState, maxCollectables, getCoinsCallback) {
       var self = this;
       self.pixiObject = new PIXI.Text('Coins: 0 / 30', {
         font: '24px Helvetica Neue, Arial, sans-serif',
@@ -92,12 +92,13 @@ define(['pixi','box2d','entities','inputhandler'],
       self.pixiObject.y = globalState.screenHeight - 36;
       self.getCoinsCallback = getCoinsCallback;
       self.previousValue = 0;
+      self.maxCollectables = maxCollectables;
 
       self.animate = function (dt) {
         var newValue = self.getCoinsCallback();
         if (self.previousValue != newValue) {
           self.previousValue = newValue;
-          self.pixiObject.setText('Coins: ' + newValue + ' / 30');
+          self.pixiObject.setText('Coins: ' + newValue + ' / ' + maxCollectables);
         }
       };
     }
@@ -119,7 +120,7 @@ define(['pixi','box2d','entities','inputhandler'],
       this.foregroundScrollableLayer = null;
       this.hudLayer = null;
       this.collectableText = null;
-      this.maxCollectables = 30;
+      this.maxCollectables = o.maxCollectables;
       this.endLevel = false;
       this.onLevelEnded = function () {};
       // setup box2d
@@ -144,7 +145,9 @@ define(['pixi','box2d','entities','inputhandler'],
       this.hudBackground.drawRect(0, globalState.screenHeight - 48, globalState.screenWidth, 48);
       this.hudBackground.endFill();
       this.hudLayer.addChild(this.hudBackground);
-      this.collectableText = new CollectableText(globalState, function () { return self.character.collectables; });
+      this.collectableText = new CollectableText(globalState,
+        this.maxCollectables,
+        function () { return self.character.collectables; });
       this.animatableObjects.push(this.collectableText);
       this.hudLayer.addChild(this.collectableText.pixiObject);
       // END HUD
@@ -185,6 +188,7 @@ define(['pixi','box2d','entities','inputhandler'],
       world: {
         worldWidth: 5000,
         worldHeight: 2000,
+        maxCollectables: 30
       },
       character: {
         x: 100,
