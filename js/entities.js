@@ -135,8 +135,7 @@ define(['pixi','box2d','multipledispatch'],
   };
 
   function StaticObject(world, o) {
-    var texture = PIXI.Texture.fromImage(o.imagePath);
-    var sprite = new PIXI.TilingSprite (texture, o.width, o.height);
+    var sprite = new PIXI.TilingSprite (o.texture, o.width, o.height);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
     this.sprite = sprite;

@@ -180,9 +180,9 @@ define(['pixi','box2d','entities','inputhandler'],
       });
     };
 
-    var dirtFloorImage = "assets/dirt-floor.png";
-    var dirtImage = "assets/dirt.png";
-    var collectableImage = "assets/collectable.png";
+    var dirtFloorImage = PIXI.Texture.fromImage("assets/dirt-floor.png");
+    var dirtImage = PIXI.Texture.fromImage("assets/dirt.png");
+    var collectableImage = PIXI.Texture.fromImage("assets/collectable.png");
     module.levels = [];
     module.levels[0] = {
       world: {
@@ -196,50 +196,66 @@ define(['pixi','box2d','entities','inputhandler'],
       },
       obstacles: [
         {
+          type: Entities.StaticObject,
+          texture: dirtImage,
+          width: 512,
+          height: 128,
+          x: 256,
+          y: 2000 - 128
+        },
+        {
           type: Entities.StaticObstacle,
-          imagePath: dirtFloorImage,
-          width: 384,
+          texture: dirtFloorImage,
+          width: 512,
           height: 64,
-          x: 192,
+          x: 256,
+          y: 2000 - 32
+        },
+        {
+          type: Entities.StaticPlatform,
+          texture: dirtFloorImage,
+          width: 512,
+          height: 64,
+          x: 256,
+          y: 2000 - 224
+        },
+        {
+          type: Entities.StaticPlatform,
+          texture: dirtFloorImage,
+          width: 528,
+          height: 64,
+          x: 776,
+          y: 2000 - 160,
+          angle: 0.24497866
+        },
+        {
+          type: Entities.StaticObstacle,
+          texture: dirtFloorImage,
+          width: 264,
+          height: 64,
+          x: 648,
+          y: 2000 - 64,
+          angle: -0.24497866
+        },
+        {
+          type: Entities.StaticObject,
+          texture: dirtImage,
+          width: 512,
+          height: 64,
+          x: 1024,
           y: 2000 - 32
         },
         {
           type: Entities.StaticObstacle,
-          imagePath: dirtFloorImage,
-          width: 265,
-          height: 64,
-          x: 520,
-          y: 2000 - 64,
-          angle: -0.2553419212
-        },
-        {
-          type: Entities.StaticPlatform,
-          imagePath: dirtFloorImage,
-          width: 506,
-          height: 64,
-          x: 640,
-          y: 2000 - 160,
-          angle: 0.2553419212
-        },
-        {
-          type: Entities.StaticObject,
-          imagePath: dirtImage,
-          width: 512,
-          height: 118,
-          x: 896,
-          y: 2000 - 59
-        },
-        {
-          type: Entities.StaticObstacle,
-          imagePath: dirtFloorImage,
+          texture: dirtFloorImage,
           width: 512,
           height: 64,
-          x: 896,
+          x: 1024,
           y: 2000 - 96
         },
         {
           type: Entities.StaticObstacle,
-          imagePath: dirtFloorImage,
+          texture: dirtFloorImage,
           width: 512,
           height: 64,
           x: 1632,
@@ -247,7 +263,7 @@ define(['pixi','box2d','entities','inputhandler'],
         },
         {
           type: Entities.StaticObstacle,
-          imagePath: dirtFloorImage,
+          texture: dirtFloorImage,
           width: 512,
           height: 64,
           x: 2400,
@@ -295,7 +311,7 @@ define(['pixi','box2d','entities','inputhandler'],
       });
       level.collectables.forEach(function (opts) {
         var finalOpts = {
-          imagePath: collectableImage,
+          texture: collectableImage,
           width: 32,
           height: 32,
         };
