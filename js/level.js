@@ -1,5 +1,5 @@
-define(['pixi','box2d','entities','inputhandler'],
-  function(PIXI, Box2D, Entities, InputHandler) {
+define(['underscore','pixi','box2d','entities','inputhandler'],
+  function(_, PIXI, Box2D, Entities, InputHandler) {
 
     var module = {};
 
@@ -183,6 +183,18 @@ define(['pixi','box2d','entities','inputhandler'],
     var dirtFloorImage = PIXI.Texture.fromImage("assets/dirt-floor.png");
     var dirtImage = PIXI.Texture.fromImage("assets/dirt.png");
     var collectableImage = PIXI.Texture.fromImage("assets/collectable.png");
+    var dirtObj = {
+      type: Entities.StaticObject,
+      texture: dirtImage
+    };
+    var dirtObstacle = {
+      type: Entities.StaticObstacle,
+      texture: dirtFloorImage
+    };
+    var dirtPlatform = {
+      type: Entities.StaticPlatform,
+      texture: dirtFloorImage
+    };
     module.levels = [];
     module.levels[0] = {
       world: {
@@ -195,80 +207,62 @@ define(['pixi','box2d','entities','inputhandler'],
         y: 1850
       },
       obstacles: [
-        {
-          type: Entities.StaticObject,
-          texture: dirtImage,
-          width: 512,
+        _.extend({
+          width: 576,
           height: 128,
-          x: 256,
+          x: 288,
           y: 2000 - 128
-        },
-        {
-          type: Entities.StaticObstacle,
-          texture: dirtFloorImage,
+        }, dirtObj),
+        _.extend({
           width: 512,
           height: 64,
           x: 256,
           y: 2000 - 32
-        },
-        {
-          type: Entities.StaticPlatform,
-          texture: dirtFloorImage,
+        }, dirtObstacle),
+        _.extend({
           width: 512,
           height: 64,
           x: 256,
           y: 2000 - 224
-        },
-        {
-          type: Entities.StaticPlatform,
-          texture: dirtFloorImage,
+        }, dirtPlatform),
+        _.extend({
           width: 528,
           height: 64,
-          x: 776,
+          x: 760,
           y: 2000 - 160,
           angle: 0.24497866
-        },
-        {
-          type: Entities.StaticObstacle,
-          texture: dirtFloorImage,
+        }, dirtPlatform),
+        _.extend({
           width: 264,
           height: 64,
           x: 648,
           y: 2000 - 64,
           angle: -0.24497866
-        },
-        {
-          type: Entities.StaticObject,
-          texture: dirtImage,
+        }, dirtObstacle),
+        _.extend({
           width: 512,
           height: 64,
           x: 1024,
           y: 2000 - 32
-        },
-        {
-          type: Entities.StaticObstacle,
-          texture: dirtFloorImage,
+        }, dirtObj),
+        _.extend({
           width: 512,
           height: 64,
           x: 1024,
           y: 2000 - 96
-        },
-        {
-          type: Entities.StaticObstacle,
-          texture: dirtFloorImage,
+        }, dirtObstacle),
+        _.extend({
           width: 512,
           height: 64,
           x: 1632,
           y: 2000 - 96
-        },
-        {
-          type: Entities.StaticObstacle,
-          texture: dirtFloorImage,
+        }, dirtObstacle),
+        _.extend({
           width: 512,
           height: 64,
           x: 2400,
           y: 2000 - 96
-        },
+        }, dirtObstacle),
       ],
       collectables: [
         {
@@ -309,15 +303,14 @@ define(['pixi','box2d','entities','inputhandler'],
         var obstacle = new opts.type(self.world, opts);
         self.backgroundLayer.addChild(obstacle.sprite);
       });
+      var collectableOpts = {
+        texture: collectableImage,
+        width: 32,
+        height: 32,
+      };
       level.collectables.forEach(function (opts) {
-        var finalOpts = {
-          texture: collectableImage,
-          width: 32,
-          height: 32,
-        };
-        finalOpts.x = opts.x;
-        finalOpts.y = opts.y;
-        var collectable = new Entities.Collectable(self.world, finalOpts);
+        _.extend(opts, collectableOpts);
+        var collectable = new Entities.Collectable(self.world, opts);
         self.backgroundLayer.addChild(collectable.sprite);
         self.animatableObjects.push(collectable);
       });
