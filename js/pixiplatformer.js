@@ -33,8 +33,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       var characterPos = levelState.character.body.GetPosition();
       var maxScrollX = -levelState.worldWidth + globalState.screenWidth;
       var maxScrollY = -levelState.worldHeight + globalState.screenHeight;
-      var scrollX = globalState.screenWidth / 2 + characterPos.get_x() * -100;
-      var scrollY = globalState.screenHeight / 2 + characterPos.get_y() * -100;
+      var scrollX = Math.round(globalState.screenWidth / 2 + characterPos.get_x() * -100);
+      var scrollY = Math.round(globalState.screenHeight / 2 + characterPos.get_y() * -100);
       levelState.foregroundScrollableLayer.x = Math.min(0, Math.max(maxScrollX, scrollX));
       levelState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
     }

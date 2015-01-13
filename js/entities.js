@@ -115,7 +115,7 @@ define(['pixi','box2d','multipledispatch'],
   };
   Character.prototype.animate = function(dt) {
     var pos = this.body.GetPosition();
-    this.sprite.position.set(pos.get_x() * 100, pos.get_y() * 100);
+    this.sprite.position.set(Math.round(pos.get_x() * 100), Math.round(pos.get_y() * 100));
     this.sprite.rotation = this.body.GetAngle();
   };
   Character.prototype.handleJumpInput = function(down) {
