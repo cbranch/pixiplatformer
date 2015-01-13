@@ -1,0 +1,146 @@
+{
+  "frames": {
+    "tree-small": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":64,"y":0,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "beanstalk": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":128,"y":0,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "flowers": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":192,"y":0,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "grass": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":256,"y":0,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "ground-l": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":0,"y":64,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "ground-m": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":64,"y":64,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "ground-r": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":128,"y":64,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "ground-slope-up": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":192,"y":64,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    },
+    "ground-slope-down": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":320,"y":64,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    },
+    "dirt-l": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":0,"y":128,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-m": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":64,"y":128,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-r": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":128,"y":128,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-slope-up": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":192,"y":128,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    },
+    "dirt-slope-down": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":320,"y":128,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    },
+    "dirt-under-l": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":0,"y":192,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-under-m": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":64,"y":192,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-under-r": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":128,"y":192,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "dirt-slope-under-up": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":192,"y":192,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    },
+    "dirt-slope-under-down": {
+      "spriteSourceSize": {"x":0,"y":0,"w":128,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":320,"y":192,"w":128,"h":64},
+      "sourceSize": {"w":128,"h":64}
+    }
+  },
+  "meta": {
+    "app": "",
+    "version": "1.0",
+    "image": "environment-tileset.png",
+    "format": "RGBA8888",
+    "size": {"w":512,"h":640},
+    "scale": "1",
+    "smartupdate": ""
+  }
+}

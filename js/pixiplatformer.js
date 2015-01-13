@@ -135,9 +135,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
       setPaused(globalState, down);
     }, true);
-    var levelState = new Level.GameLevel(globalState, Level.levels[0]);
-    // let's go
-    gameLoop(globalState, levelState, renderer);
+    var levelState = new Level.GameLevel(globalState, Level.levels[0], function () {
+      // let's go
+      gameLoop(globalState, levelState, renderer);
+    });
   }
 
   return function () {

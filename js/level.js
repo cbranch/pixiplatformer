@@ -180,23 +180,94 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
       });
     };
 
-    var dirtFloorImage = PIXI.Texture.fromImage("assets/dirt-floor.png");
-    var dirtImage = PIXI.Texture.fromImage("assets/dirt.png");
-    var collectableImage = PIXI.Texture.fromImage("assets/collectable.png");
     var dirtObj = {
       type: Entities.StaticObject,
-      texture: dirtImage
+      texture: "dirt-m",
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtSlopeUp = {
+      type: Entities.StaticObject,
+      texture: "dirt-slope-up",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtSlopeDown = {
+      type: Entities.StaticObject,
+      texture: "dirt-slope-down",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 }
     };
     var dirtObstacle = {
       type: Entities.StaticObstacle,
-      texture: dirtFloorImage
+      texture: "ground-m",
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtObstacleL = {
+      type: Entities.StaticObstacle,
+      texture: "ground-l",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtObstacleR = {
+      type: Entities.StaticObstacle,
+      texture: "ground-r",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtObstacleSlopeUp = {
+      type: Entities.StaticObstacle,
+      texture: "ground-slope-up",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 },
+      vertices: [
+        { x: 0, y: 64 },
+        { x: 128, y: 0 },
+        { x: 128, y: 80 },
+        { x: 0, y: 80 },
+      ]
     };
     var dirtPlatform = {
       type: Entities.StaticPlatform,
-      texture: dirtFloorImage
+      texture: "ground-m",
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtPlatformL = {
+      type: Entities.StaticPlatform,
+      texture: "ground-l",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtPlatformR = {
+      type: Entities.StaticPlatform,
+      texture: "ground-r",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    var dirtPlatformSlopeDown = {
+      type: Entities.StaticPlatform,
+      texture: "ground-slope-down",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 },
+      vertices: [
+        { x: 0, y: 0 },
+        { x: 128, y: 64 },
+        { x: 128, y: 80 },
+        { x: 0, y: 80 }
+      ]
     };
     module.levels = [];
     module.levels[0] = {
+      assetsToLoad: [ "assets/character.png", "assets/environment-tileset.json", "assets/collectable.png" ],
       world: {
         worldWidth: 5000,
         worldHeight: 2000,
@@ -208,37 +279,49 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
       },
       obstacles: [
         _.extend({
-          width: 576,
+          width: 512,
           height: 128,
-          x: 288,
+          x: 0,
+          y: 2000 - 192
+        }, dirtObj),
+        _.extend({
+          width: 512,
+          height: 64,
+          x: 0,
+          y: 2000 - 64
+        }, dirtObstacle),
+        _.extend({
+          width: 512,
+          height: 64,
+          x: 0,
+          y: 2000 - 256
+        }, dirtPlatform),
+        _.extend({
+          width: 256,
+          height: 64,
+          x: 640,
+          y: 2000 - 128
+        }, dirtObstacle),
+        _.extend({
+          width: 256,
+          height: 64,
+          x: 640,
+          y: 2000 - 64
+        }, dirtObj),
+        _.extend({
+          width: 128,
+          height: 64,
+          x: 512,
           y: 2000 - 128
         }, dirtObj),
         _.extend({
-          width: 512,
-          height: 64,
-          x: 256,
-          y: 2000 - 32
-        }, dirtObstacle),
+          x: 512,
+          y: 2000 - 128
+        }, dirtObstacleSlopeUp),
         _.extend({
-          width: 512,
-          height: 64,
-          x: 256,
-          y: 2000 - 224
-        }, dirtPlatform),
-        _.extend({
-          width: 528,
-          height: 64,
-          x: 760,
-          y: 2000 - 160,
-          angle: 0.24497866
-        }, dirtPlatform),
-        _.extend({
-          width: 264,
-          height: 64,
-          x: 648,
-          y: 2000 - 64,
-          angle: -0.24497866
-        }, dirtObstacle),
+          x: 512,
+          y: 2000 - 64
+        }, dirtSlopeUp),
         _.extend({
           width: 512,
           height: 64,
@@ -246,23 +329,17 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
           y: 2000 - 32
         }, dirtObj),
         _.extend({
-          width: 512,
-          height: 64,
-          x: 1024,
-          y: 2000 - 96
-        }, dirtObstacle),
+          x: 512,
+          y: 2000 - 256
+        }, dirtPlatformSlopeDown),
         _.extend({
-          width: 512,
-          height: 64,
-          x: 1632,
-          y: 2000 - 96
-        }, dirtObstacle),
+          x: 512,
+          y: 2000 - 192
+        }, dirtSlopeDown),
         _.extend({
-          width: 512,
-          height: 64,
-          x: 2400,
-          y: 2000 - 96
-        }, dirtObstacle),
+          x: 640,
+          y: 2000 - 192
+        }, dirtPlatformSlopeDown),
       ],
       collectables: [
         {
@@ -288,32 +365,39 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
       ]
     };
 
-    module.GameLevel = function(globalState, level) {
+    module.GameLevel = function(globalState, level, onLoaded) {
       var self = this;
-      Level.call(this, globalState, level.world);
+      var setupLevel = function () {
+        var character = new Entities.Character(self.world, level.character);
+        self.foregroundLayer.addChild(character.sprite);
+        self.animatableObjects.push(character);
+        self.physicsObjects.push(character);
+        self.character = character;
+        setInputHandlersForCharacter(globalState.inputHandler, self);
 
-      var character = new Entities.Character(this.world, level.character);
-      this.foregroundLayer.addChild(character.sprite);
-      this.animatableObjects.push(character);
-      this.physicsObjects.push(character);
-      this.character = character;
-      setInputHandlersForCharacter(globalState.inputHandler, this);
-
-      level.obstacles.forEach(function (opts) {
-        var obstacle = new opts.type(self.world, opts);
-        self.backgroundLayer.addChild(obstacle.sprite);
-      });
-      var collectableOpts = {
-        texture: collectableImage,
-        width: 32,
-        height: 32,
+        level.obstacles.forEach(function (opts) {
+          var obstacle = new opts.type(self.world, opts);
+          self.backgroundLayer.addChild(obstacle.sprite);
+        });
+        var collectableOpts = {
+          texture: "assets/collectable.png",
+          width: 32,
+          height: 32,
+          anchor: { x: 0.5, y: 0.5 }
+        };
+        level.collectables.forEach(function (opts) {
+          _.extend(opts, collectableOpts);
+          var collectable = new Entities.Collectable(self.world, opts);
+          self.backgroundLayer.addChild(collectable.sprite);
+          self.animatableObjects.push(collectable);
+        });
+        onLoaded();
       };
-      level.collectables.forEach(function (opts) {
-        _.extend(opts, collectableOpts);
-        var collectable = new Entities.Collectable(self.world, opts);
-        self.backgroundLayer.addChild(collectable.sprite);
-        self.animatableObjects.push(collectable);
-      });
+
+      Level.call(this, globalState, level.world);
+      var loader = new PIXI.AssetLoader(level.assetsToLoad);
+      loader.onComplete = setupLevel;
+      loader.load();
     };
     module.GameLevel.prototype = Object.create (Level.prototype);
     module.GameLevel.prototype.constructor = module.GameLevel;

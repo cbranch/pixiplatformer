@@ -18,7 +18,7 @@
   "dependencies": {
     "requirejs": null,
     "underscore": null,
-    "pixi.js": "GoodBoyDigital/pixi.js#~2.0.0",
+    "pixi.js": "GoodBoyDigital/pixi.js#~2.2.3",
     "stats.js": "mrdoob/stats.js",
     "box2d.js": "kripken/box2d.js"
   }

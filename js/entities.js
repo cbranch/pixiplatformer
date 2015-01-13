@@ -4,6 +4,21 @@ define(['pixi','box2d','multipledispatch'],
   var Match = MultipleDispatch.Match;
   var MatchTypes = MultipleDispatch.MatchTypes;
 
+  // from embox2d-helpers.js
+  function createPolygonShape(vertices) {
+    var shape = new Box2D.b2PolygonShape();
+    var buffer = Box2D.allocate(vertices.length * 8, 'float', Box2D.ALLOC_STACK);
+    var offset = 0;
+    for (var i=0;i<vertices.length;i++) {
+        Box2D.setValue(buffer+(offset), vertices[i].get_x(), 'float'); // x
+        Box2D.setValue(buffer+(offset+4), vertices[i].get_y(), 'float'); // y
+        offset += 8;
+    }
+    var ptr_wrapped = Box2D.wrapPointer(buffer, Box2D.b2Vec2);
+    shape.Set(ptr_wrapped, vertices.length);
+    return shape;
+  }
+
   function ReadyToJumpState() {
     this.startJump = false;
   }
@@ -135,9 +150,9 @@ define(['pixi','box2d','multipledispatch'],
   };
 
   function StaticObject(world, o) {
-    var sprite = new PIXI.TilingSprite (o.texture, o.width, o.height);
-    sprite.anchor.x = 0.5;
-    sprite.anchor.y = 0.5;
+    var sprite = new PIXI.TilingSprite(PIXI.Texture.fromFrame(o.texture), o.width, o.height);
+    sprite.anchor.x = o.anchor.x;
+    sprite.anchor.y = o.anchor.y;
     this.sprite = sprite;
     this.sprite.position.set(o.x, o.y);
     if ('angle' in o) {
@@ -156,28 +171,61 @@ define(['pixi','box2d','multipledispatch'],
     return body;
   }
 
+  function getVerticesFromConfig(o) {
+    if ('vertices' in o) {
+      var verts = [];
+      for (var i = 0; i < o.vertices.length; i++) {
+        verts.push(new Box2D.b2Vec2(o.vertices[i].x / 100, o.vertices[i].y / 100));
+      }
+      return verts;
+    } else {
+      var w = o.width / 100;
+      var h = o.height / 100;
+      return [new Box2D.b2Vec2 (0, 0),
+        new Box2D.b2Vec2(w, 0),
+        new Box2D.b2Vec2(w, h),
+        new Box2D.b2Vec2(0, h)];
+    }
+  }
+
   function StaticObstacle(world, o) {
     StaticObject.call(this, world, o);
 
     this.body = initializeBody(this, world, o);
-    var shapeDef = new Box2D.b2PolygonShape();
-    shapeDef.SetAsBox(o.width / 200, o.height / 200);
+    var shapeDef = createPolygonShape(getVerticesFromConfig(o));
     this.body.CreateFixture(shapeDef, 1.0);
   }
   StaticObstacle.prototype = Object.create (StaticObject.prototype);
   StaticObstacle.prototype.constructor = StaticObstacle;
 
+  function extrudeVerts(v1, v4, extrusionLength) {
+    var v1x = v1.get_x();
+    var v1y = v1.get_y();
+    var v4x = v4.get_x();
+    var v4y = v4.get_y();
+    var vectorX = v4x - v1x;
+    var vectorY = v4y - v1y;
+    var vectorLength = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+    var vectorNX = vectorX / vectorLength;
+    var vectorNY = vectorY / vectorLength;
+    var vectorPX = -vectorNY * -extrusionLength;
+    var vectorPY = vectorNX * -extrusionLength;
+    return [new Box2D.b2Vec2(v1x, v1y),
+      new Box2D.b2Vec2(v1x + vectorPX, v1y + vectorPY),
+      new Box2D.b2Vec2(v4x + vectorPX, v4y + vectorPY),
+      new Box2D.b2Vec2(v4x, v4y)];
+  }
+
   function StaticPlatform(world, o) {
     StaticObject.call(this, world, o);
 
     this.body = initializeBody(this, world, o);
-    var shapeDef = new Box2D.b2PolygonShape();
-    shapeDef.SetAsBox(o.width / 200, o.height / 200);
+    var verts = getVerticesFromConfig(o);
+    var shapeDef = createPolygonShape(verts);
     this.body.CreateFixture(shapeDef, 1.0);
-    var sensorDef = new Box2D.b2PolygonShape();
-    sensorDef.SetAsBox(o.width / 200, 0.1, new Box2D.b2Vec2 (0.0, -o.height / 200 - 0.1), 0.0);
     var sensorFixtureDef = new Box2D.b2FixtureDef();
-    sensorFixtureDef.set_shape(sensorDef);
+    var sensorVerts = extrudeVerts(verts[0], verts[1], 0.2);
+    sensorFixtureDef.set_shape(createPolygonShape(sensorVerts));
     sensorFixtureDef.set_isSensor(true);
     sensorFixtureDef.set_density(1.0);
     this.sensorFixture = this.body.CreateFixture(sensorFixtureDef);
@@ -230,14 +278,9 @@ define(['pixi','box2d','multipledispatch'],
         platform.supportPlayer = true;
       } else {
         var yVelocity = character.body.GetLinearVelocity().get_y();
-        if (yVelocity < -1) {
+        if (platform.supportPlayer !== true) {
           contact.disableThisStep = true;
           return;
-        } else {
-          if (platform.supportPlayer !== true) {
-            contact.disableThisStep = true;
-            return;
-          }
         }
         var newState = character.jumpState.onFloor();
         if (newState) {
