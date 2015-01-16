@@ -9,6 +9,8 @@ require.config({
     'multipledispatch': 'js/multipledispatch',
     'entities': 'js/entities',
     'level': 'js/level',
+    'leveldata': 'js/leveldata',
+    'levelobstacles': 'js/levelobstacles',
     'pixiplatformer': 'js/pixiplatformer'
   },
   shim: {

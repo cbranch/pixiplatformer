@@ -1,5 +1,5 @@
-define(['underscore','pixi','box2d','entities','inputhandler'],
-  function(_, PIXI, Box2D, Entities, InputHandler) {
+define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','leveldata'],
+  function(_, PIXI, Box2D, Entities, InputHandler, LevelObstacles, LevelData) {
 
     var module = {};
 
@@ -180,190 +180,7 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
       });
     };
 
-    var dirtObj = {
-      type: Entities.StaticObject,
-      texture: "dirt-m",
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtSlopeUp = {
-      type: Entities.StaticObject,
-      texture: "dirt-slope-up",
-      width: 128,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtSlopeDown = {
-      type: Entities.StaticObject,
-      texture: "dirt-slope-down",
-      width: 128,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtObstacle = {
-      type: Entities.StaticObstacle,
-      texture: "ground-m",
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtObstacleL = {
-      type: Entities.StaticObstacle,
-      texture: "ground-l",
-      width: 64,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtObstacleR = {
-      type: Entities.StaticObstacle,
-      texture: "ground-r",
-      width: 64,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtObstacleSlopeUp = {
-      type: Entities.StaticObstacle,
-      texture: "ground-slope-up",
-      width: 128,
-      height: 64,
-      anchor: { x: 0, y: 0 },
-      vertices: [
-        { x: 0, y: 64 },
-        { x: 128, y: 0 },
-        { x: 128, y: 80 },
-        { x: 0, y: 80 },
-      ]
-    };
-    var dirtPlatform = {
-      type: Entities.StaticPlatform,
-      texture: "ground-m",
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtPlatformL = {
-      type: Entities.StaticPlatform,
-      texture: "ground-l",
-      width: 64,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtPlatformR = {
-      type: Entities.StaticPlatform,
-      texture: "ground-r",
-      width: 64,
-      height: 64,
-      anchor: { x: 0, y: 0 }
-    };
-    var dirtPlatformSlopeDown = {
-      type: Entities.StaticPlatform,
-      texture: "ground-slope-down",
-      width: 128,
-      height: 64,
-      anchor: { x: 0, y: 0 },
-      vertices: [
-        { x: 0, y: 0 },
-        { x: 128, y: 64 },
-        { x: 128, y: 80 },
-        { x: 0, y: 80 }
-      ]
-    };
-    module.levels = [];
-    module.levels[0] = {
-      assetsToLoad: [ "assets/character.png", "assets/environment-tileset.json", "assets/collectable.png" ],
-      world: {
-        worldWidth: 5000,
-        worldHeight: 2000,
-        maxCollectables: 30
-      },
-      character: {
-        x: 100,
-        y: 1850
-      },
-      obstacles: [
-        _.extend({
-          width: 512,
-          height: 128,
-          x: 0,
-          y: 2000 - 192
-        }, dirtObj),
-        _.extend({
-          width: 512,
-          height: 64,
-          x: 0,
-          y: 2000 - 64
-        }, dirtObstacle),
-        _.extend({
-          width: 512,
-          height: 64,
-          x: 0,
-          y: 2000 - 256
-        }, dirtPlatform),
-        _.extend({
-          width: 256,
-          height: 64,
-          x: 640,
-          y: 2000 - 128
-        }, dirtObstacle),
-        _.extend({
-          width: 256,
-          height: 64,
-          x: 640,
-          y: 2000 - 64
-        }, dirtObj),
-        _.extend({
-          width: 128,
-          height: 64,
-          x: 512,
-          y: 2000 - 128
-        }, dirtObj),
-        _.extend({
-          x: 512,
-          y: 2000 - 128
-        }, dirtObstacleSlopeUp),
-        _.extend({
-          x: 512,
-          y: 2000 - 64
-        }, dirtSlopeUp),
-        _.extend({
-          width: 512,
-          height: 64,
-          x: 1024,
-          y: 2000 - 32
-        }, dirtObj),
-        _.extend({
-          x: 512,
-          y: 2000 - 256
-        }, dirtPlatformSlopeDown),
-        _.extend({
-          x: 512,
-          y: 2000 - 192
-        }, dirtSlopeDown),
-        _.extend({
-          x: 640,
-          y: 2000 - 192
-        }, dirtPlatformSlopeDown),
-      ],
-      collectables: [
-        {
-          x: 192,
-          y: 2000 - 192
-        },
-        {
-          x: 256,
-          y: 2000 - 192
-        },
-        {
-          x: 320,
-          y: 2000 - 192
-        },
-        {
-          x: 384,
-          y: 2000 - 192
-        },
-        {
-          x: 448,
-          y: 2000 - 192
-        },
-      ]
-    };
+    module.levels = LevelData;
 
     module.GameLevel = function(globalState, level, onLoaded) {
       var self = this;
@@ -376,7 +193,8 @@ define(['underscore','pixi','box2d','entities','inputhandler'],
         setInputHandlersForCharacter(globalState.inputHandler, self);
 
         level.obstacles.forEach(function (opts) {
-          var obstacle = new opts.type(self.world, opts);
+          var combinedOpts = _.extend(opts, LevelObstacles[opts.type]);
+          var obstacle = new combinedOpts.jsType(self.world, combinedOpts);
           self.backgroundLayer.addChild(obstacle.sprite);
         });
         var collectableOpts = {
