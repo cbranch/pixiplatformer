@@ -1,10 +1,11 @@
 define(function() {
+  var defaultKeyPressHandler = function() {};
   function InputHandler() {
     this.keyPressesSinceLastFrame = [];
     this.keyPressHandlers = [];
     this.synchronousHandling = [];
     for (var i = 0; i < this.KEY_LAST; i++) {
-      this.keyPressHandlers.push(function() {});
+      this.keyPressHandlers.push(defaultKeyPressHandler);
     }
   }
 
@@ -14,7 +15,8 @@ define(function() {
   InputHandler.KEY_RIGHT = 3;
   InputHandler.KEY_DOWN = 4;
   InputHandler.KEY_P = 5;
-  InputHandler.KEY_LAST = 6;
+  InputHandler.KEY_Q = 6;
+  InputHandler.KEY_LAST = 7;
 
   InputHandler.prototype.mapKeyCodeToLogicalCode = function(code) {
     switch (code) {
@@ -30,6 +32,8 @@ define(function() {
         return InputHandler.KEY_DOWN;
       case 80:
         return InputHandler.KEY_P;
+      case 81:
+        return InputHandler.KEY_Q;
       default:
         return undefined;
     }
@@ -81,6 +85,14 @@ define(function() {
     this.keyPressHandlers[keyCode] = callback;
     if (isSynchronous) {
       this.synchronousHandling.push(keyCode);
+    }
+  };
+
+  InputHandler.prototype.removeHandler = function(keyCode) {
+    this.keyPressHandlers[keyCode] = defaultKeyPressHandler;
+    var i = this.synchronousHandling.indexOf(keyCode);
+    if (i != -1) {
+      this.synchronousHandling.splice(i);
     }
   };
 

@@ -343,7 +343,7 @@ define(['pixi','box2d','multipledispatch'],
     }
 
     var self = this;
-    self.animate = function (dt, currentTime) {
+    self.animate = function (dt, currentTime, levelState) {
       if (!('lockedAnimTime' in self)) {
         self.lockedAnimTime = currentTime;
       }
@@ -364,24 +364,28 @@ define(['pixi','box2d','multipledispatch'],
           self.unlockedAnimTime = currentTime;
         }
         var unlockedTimeElapsed = currentTime - self.unlockedAnimTime;
-        var silhouetteValue = (2000 - unlockedTimeElapsed) / 1000;
-        if (silhouetteValue <= 1) {
-          if (silhouetteValue <= 0) {
-            silhouetteValue = 0;
+        if (unlockedTimeElapsed < 3000) {
+          var silhouetteValue = (2000 - unlockedTimeElapsed) / 1000;
+          if (silhouetteValue <= 1) {
+            if (silhouetteValue <= 0) {
+              silhouetteValue = 0;
+            }
+            self.sprite.shader.gray = silhouetteValue;
           }
-          self.sprite.shader.gray = silhouetteValue;
-        }
-        var lockedTimeElapsed = currentTime - self.lockedAnimTime;
-        for (var i = 0; i < 10; i++) {
-          var circPos = calculateCirclePos(i);
-          for (var j = 0; j < 3; j++) {
-            var yDisplacement = (unlockedTimeElapsed / 300) - (2 - j);
-            if (yDisplacement < 0) yDisplacement = 0;
-            yDisplacement = Math.pow(4, yDisplacement);
-            var lockSprite = self.lockSprites[j][i];
-            lockSprite.position.set(Math.cos(Math.PI * circPos) * self.width * 0.7 + self.x,
-              self.y - (self.height / 3) * j - (self.height / 6) - yDisplacement);
+          var lockedTimeElapsed = currentTime - self.lockedAnimTime;
+          for (var i = 0; i < 10; i++) {
+            var circPos = calculateCirclePos(i);
+            for (var j = 0; j < 3; j++) {
+              var yDisplacement = (unlockedTimeElapsed / 300) - (2 - j);
+              if (yDisplacement < 0) yDisplacement = 0;
+              yDisplacement = Math.pow(4, yDisplacement);
+              var lockSprite = self.lockSprites[j][i];
+              lockSprite.position.set(Math.cos(Math.PI * circPos) * self.width * 0.7 + self.x,
+                self.y - (self.height / 3) * j - (self.height / 6) - yDisplacement);
+            }
           }
+        } else {
+          levelState.levelComplete();
         }
       };
       if (self.locked) {

@@ -39,30 +39,6 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       return contactListener;
     }
 
-    function setInputHandlersForCharacter(inputHandler, levelState) {
-      inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
-        if (levelState.character) {
-          levelState.character.handleJumpInput(down);
-        }
-      });
-      inputHandler.setHandler(InputHandler.KEY_LEFT, function(down) {
-        if (levelState.character) {
-          levelState.character.moveLeft(down);
-        }
-      });
-      inputHandler.setHandler(InputHandler.KEY_RIGHT, function(down) {
-        if (levelState.character) {
-          levelState.character.moveRight(down);
-        }
-      });
-      inputHandler.setHandler(InputHandler.KEY_UP, function(down) {});
-      inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {
-        if (levelState.character) {
-          levelState.character.moveDown(down);
-        }
-      });
-    }
-
     function defineWorldEdge(world, x1, y1, x2, y2) {
       var bodyDef = new Box2D.b2BodyDef();
       bodyDef.set_position(new Box2D.b2Vec2((x2 - x1) / 2, (y2 - y1) / 2));
@@ -103,6 +79,60 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       };
     }
 
+    function easeOutCubic(time, startValue, changeInValue, duration) {
+        time = (time / duration) - 1;
+        return changeInValue * (time * time * time + 1) + startValue;
+    }
+
+    function LevelCompleteScreen(level) {
+      var self = this;
+      // Screen fade out
+      self.screenFader = new PIXI.DisplayObjectContainer();
+      level.hudLayer.addChild(self.screenFader);
+      var fadeObject = new PIXI.Graphics();
+      fadeObject.beginFill(0);
+      fadeObject.drawRect(0, 0, level.globalState.screenWidth, level.globalState.screenHeight);
+      fadeObject.endFill();
+      self.screenFader.addChild(fadeObject);
+      self.screenFader.alpha = 0;
+      // Text display
+      var text = 'Level complete\nYou found ' + level.princessName + '!';
+      var textFromX = -level.globalState.screenWidth / 2;
+      var textToX = level.globalState.screenWidth / 2;
+      self.completeText = new PIXI.Text(text, {
+        font: '48px Helvetica Neue, Arial, sans-serif',
+        fill: 'white',
+        align: 'center',
+        dropShadow: true
+      });
+      self.completeText.anchor = new PIXI.Point(0.5, 0.5);
+      self.completeText.x = textFromX;
+      self.completeText.y = level.globalState.screenHeight / 2;
+      level.hudLayer.addChild(self.completeText);
+
+      self.animate = function (dt, currentTime) {
+        if (!('fromTime' in self)) {
+          self.fromTime = currentTime;
+        }
+        var elapsedTime = currentTime - self.fromTime;
+        // Animate screen fade out
+        var newAlpha = Math.min(elapsedTime / 1000, 0.7);
+        self.screenFader.alpha = newAlpha;
+        // Animate in text
+        var textAnimDuration = 2000;
+        self.completeText.x = easeOutCubic(Math.min(elapsedTime, textAnimDuration),
+          textFromX, textToX - textFromX, textAnimDuration);
+
+        if (elapsedTime > 2000) {
+          level.globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function (down) {
+            if (down) {
+              level.endLevel = true;
+            }
+          });
+        }
+      };
+    }
+
     function Level(globalState, o) {
       var self = this;
       this.globalState = globalState;
@@ -121,6 +151,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       this.hudLayer = null;
       this.collectableText = null;
       this.maxCollectables = o.maxCollectables;
+      this.isLevelComplete = false;
       this.endLevel = false;
       this.onLevelEnded = function () {};
       // setup box2d
@@ -179,6 +210,46 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         }
       });
     };
+    Level.prototype.levelComplete = function () {
+      if (!this.isLevelComplete) {
+        this.isLevelComplete = true;
+        var levelCompleteScreen = new LevelCompleteScreen(this);
+        this.unbindInputHandlersForCharacter(this.globalState.inputHandler);
+        this.animatableObjects.push(levelCompleteScreen);
+      }
+    };
+    Level.prototype.setInputHandlersForCharacter = function (inputHandler) {
+      var self = this;
+      inputHandler.setHandler(InputHandler.KEY_SPACE, function(down) {
+        if (self.character) {
+          self.character.handleJumpInput(down);
+        }
+      });
+      inputHandler.setHandler(InputHandler.KEY_LEFT, function(down) {
+        if (self.character) {
+          self.character.moveLeft(down);
+        }
+      });
+      inputHandler.setHandler(InputHandler.KEY_RIGHT, function(down) {
+        if (self.character) {
+          self.character.moveRight(down);
+        }
+      });
+      inputHandler.setHandler(InputHandler.KEY_UP, function(down) {});
+      inputHandler.setHandler(InputHandler.KEY_DOWN, function(down) {
+        if (self.character) {
+          self.character.moveDown(down);
+        }
+      });
+    };
+    Level.prototype.unbindInputHandlersForCharacter = function (inputHandler) {
+      inputHandler.removeHandler(InputHandler.KEY_SPACE);
+      inputHandler.removeHandler(InputHandler.KEY_LEFT);
+      inputHandler.removeHandler(InputHandler.KEY_RIGHT);
+      inputHandler.removeHandler(InputHandler.KEY_UP);
+      inputHandler.removeHandler(InputHandler.KEY_DOWN);
+    };
+
 
     module.levels = LevelData;
 
@@ -190,7 +261,11 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         self.animatableObjects.push(character);
         self.physicsObjects.push(character);
         self.character = character;
-        setInputHandlersForCharacter(globalState.inputHandler, self);
+        self.setInputHandlersForCharacter(globalState.inputHandler);
+        // DEBUG CODE
+        globalState.inputHandler.setHandler(InputHandler.KEY_Q, function(down) {
+          self.levelComplete();
+        });
         // Setup map
         level.obstacles.forEach(function (opts) {
           var combinedOpts = _.extend(opts, LevelObstacles[opts.type]);
@@ -216,6 +291,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           lockTexture: "assets/lock.png",
           width: 64,
           height: 128,
+          name: "an unnamed princess",
           anchor: { x: 0.5, y: 1 }
         }, level.princess);
         var princess = new Entities.Princess(self.world, princessOpts);
@@ -226,6 +302,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           });
         });
         self.animatableObjects.push(princess);
+        self.princessName = princessOpts.name;
         onLoaded();
       };
 
