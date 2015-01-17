@@ -7,15 +7,6 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
   var containerElementId = 'game';
   var debugDrawId = 'debugDraw';
 
-  function setPaused(globalState, down) {
-    if (down) {
-      if (globalState.paused) {
-        globalState.unsuspendLoop();
-      }
-      globalState.paused = !globalState.paused;
-    }
-  }
-
   function gameLoop(globalState, levelState, renderer) {
     var world = levelState.world;
     var stage = levelState.stage;
@@ -112,32 +103,40 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     return stats;
   }
 
-  function main() {
-    var globalState = {
-      stats: null,
-      inputHandler: null,
-      debugDraw: null,
-      debugGraphics: null,
-      screenWidth: 1000,
-      screenHeight: 600,
-      backgroundColor: backgroundColor,
-      paused: false
-    };
-    globalState.inputHandler = new InputHandler();
-    globalState.inputHandler.setupInput();
-    globalState.stats = initStats();
-    var containerElement = document.getElementById(containerElementId);
-    var renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
-    containerElement.appendChild(renderer.view);
-    containerElement.appendChild(globalState.stats.domElement);
-    globalState.debugGraphics = new PIXI.Graphics();
-    globalState.debugDraw = createDebugDraw(globalState.debugGraphics, document.getElementById(debugDrawId));
-    globalState.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
-      setPaused(globalState, down);
+  function GlobalState(debugDrawElement) {
+    this.renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
+    this.stats = initStats();
+    this.inputHandler = new InputHandler();
+    this.inputHandler.setupInput();
+    this.debugGraphics = new PIXI.Graphics();
+    this.debugDraw = createDebugDraw(this.debugGraphics, debugDrawElement);
+    this.screenWidth = 1000;
+    this.screenHeight = 600;
+    this.backgroundColor = backgroundColor;
+    this.paused = false;
+    this.unsuspendLoop = function() {};
+    var self = this;
+    this.inputHandler.setHandler(InputHandler.KEY_P, function(down) {
+      self.setPaused(down);
     }, true);
+  }
+  GlobalState.prototype.setPaused = function (down) {
+    if (down) {
+      if (this.paused) {
+        this.unsuspendLoop();
+      }
+      this.paused = !this.paused;
+    }
+  };
+
+  function main() {
+    var globalState = new GlobalState(document.getElementById(debugDrawId));
+    var containerElement = document.getElementById(containerElementId);
+    containerElement.appendChild(globalState.renderer.view);
+    containerElement.appendChild(globalState.stats.domElement);
     var levelState = new Level.GameLevel(globalState, Level.levels[0], function () {
       // let's go
-      gameLoop(globalState, levelState, renderer);
+      gameLoop(globalState, levelState, globalState.renderer);
     });
   }
 
