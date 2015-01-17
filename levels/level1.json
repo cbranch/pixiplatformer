@@ -1,5 +1,11 @@
 {
-  "assetsToLoad": [ "assets/character.png", "assets/environment-tileset.json", "assets/collectable.png" ],
+  "assetsToLoad": [
+    "assets/character.png",
+    "assets/environment-tileset.json",
+    "assets/collectable.png",
+    "assets/princess1.png",
+    "assets/lock.png"
+   ],
   "world": {
     "worldWidth": 4160,
     "worldHeight": 2000,
@@ -386,5 +392,9 @@
       "x": 3712,
       "y": 1744
     }
-  ]
+  ],
+  "princess": {
+    "x": 3840,
+    "y": 1808
+  }
 }

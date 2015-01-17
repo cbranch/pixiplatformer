@@ -38,8 +38,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       levelState.foregroundScrollableLayer.x = Math.min(0, Math.max(maxScrollX, scrollX));
       levelState.foregroundScrollableLayer.y = Math.min(0, Math.max(maxScrollY, scrollY));
     }
-    function updateDisplay(dt) {
-      levelState.animatableObjects.map(function(x) { x.animate(dt, levelState); });
+    function updateDisplay(currentTime, dt) {
+      levelState.animatableObjects.map(function(x) { x.animate(dt, currentTime, levelState); });
       levelState.purgeRemovedAnimatableObjects();
       updateScrolling();
       globalState.debugGraphics.clear();
@@ -62,7 +62,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
           pauseMessageShown = false;
           levelState.pauseLayer.visible = false;
         }
-        updateDisplay(physicsTimestamp - currentTimestamp);
+        updateDisplay(currentTimestamp, physicsTimestamp - currentTimestamp);
       } else {
         // If first frame after pause, show pause message
         pauseMessageShown = true;
@@ -81,8 +81,8 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       }
     }
     function captureFirstTimestamp(currentTimestamp) {
-      physicsTimestamp = currentTimestamp;
-      tick();
+      physicsTimestamp = currentTimestamp - 10;
+      tick(currentTimestamp);
     }
     requestAnimationFrame(captureFirstTimestamp);
   }

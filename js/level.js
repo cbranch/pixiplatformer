@@ -185,18 +185,19 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
     module.GameLevel = function(globalState, level, onLoaded) {
       var self = this;
       var setupLevel = function () {
-        var character = new Entities.Character(self.world, level.character);
+        var character = new Entities.Character(self.world, level.character, level.world.maxCollectables);
         self.foregroundLayer.addChild(character.sprite);
         self.animatableObjects.push(character);
         self.physicsObjects.push(character);
         self.character = character;
         setInputHandlersForCharacter(globalState.inputHandler, self);
-
+        // Setup map
         level.obstacles.forEach(function (opts) {
           var combinedOpts = _.extend(opts, LevelObstacles[opts.type]);
           var obstacle = new combinedOpts.jsType(self.world, combinedOpts);
           self.backgroundLayer.addChild(obstacle.sprite);
         });
+        // Add collectables
         var collectableOpts = {
           texture: "assets/collectable.png",
           width: 32,
@@ -209,6 +210,22 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           self.backgroundLayer.addChild(collectable.sprite);
           self.animatableObjects.push(collectable);
         });
+        // Place princess
+        var princessOpts = _.extend({
+          texture: "assets/princess1.png",
+          lockTexture: "assets/lock.png",
+          width: 64,
+          height: 128,
+          anchor: { x: 0.5, y: 1 }
+        }, level.princess);
+        var princess = new Entities.Princess(self.world, princessOpts);
+        self.backgroundLayer.addChild(princess.sprite);
+        princess.lockSprites.forEach(function (sprites) {
+          sprites.forEach(function (x) {
+            self.foregroundLayer.addChild(x);
+          });
+        });
+        self.animatableObjects.push(princess);
         onLoaded();
       };
 

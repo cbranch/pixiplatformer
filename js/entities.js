@@ -66,7 +66,7 @@ define(['pixi','box2d','multipledispatch'],
   };
   FallingState.prototype.restrictMovement = function () { return true; };
 
-  function Character(world, opts) {
+  function Character(world, opts, maxCollectables) {
     var characterTexture = PIXI.Texture.fromImage("assets/character.png");
     var sprite = new PIXI.Sprite (characterTexture);
     sprite.anchor.x = 0.5;
@@ -101,6 +101,7 @@ define(['pixi','box2d','multipledispatch'],
     this.movingRight = false;
     this.movingDown = false;
     this.collectables = 0;
+    this.maxCollectables = maxCollectables;
   }
   Character.prototype.physics = function(dt) {
     var newState = this.jumpState.physics(dt, this);
@@ -128,7 +129,7 @@ define(['pixi','box2d','multipledispatch'],
       this.body.ApplyLinearImpulse(new Box2D.b2Vec2(impulse, 0), this.body.GetWorldCenter());
     }
   };
-  Character.prototype.animate = function(dt) {
+  Character.prototype.animate = function() {
     var pos = this.body.GetPosition();
     this.sprite.position.set(Math.round(pos.get_x() * 100), Math.round(pos.get_y() * 100));
     this.sprite.rotation = this.body.GetAngle();
@@ -147,6 +148,9 @@ define(['pixi','box2d','multipledispatch'],
   };
   Character.prototype.moveDown = function(down) {
     this.movingDown = down;
+  };
+  Character.prototype.hasEnoughCollectables = function() {
+    return this.collectables >= this.maxCollectables;
   };
 
   function StaticObject(world, o) {
@@ -247,7 +251,7 @@ define(['pixi','box2d','multipledispatch'],
     this.collected = false;
 
     var self = this;
-    self.animate = function (dt, levelState) {
+    self.animate = function (dt, currentTime, levelState) {
       if (self.collected) {
         self.body.GetWorld().DestroyBody(self.body);
         self.body = undefined;
@@ -259,6 +263,139 @@ define(['pixi','box2d','multipledispatch'],
   }
   Collectable.prototype = Object.create (StaticObject.prototype);
   Collectable.prototype.constructor = StaticObstacle;
+
+  SilhouetteFilter = function()
+  {
+      PIXI.AbstractFilter.call( this );
+
+      this.passes = [this];
+
+      // set the uniforms
+      this.uniforms = {
+          gray: {type: '1f', value: 1}
+      };
+
+      this.fragmentSrc = [
+          'precision mediump float;',
+          'varying vec2 vTextureCoord;',
+          'varying vec4 vColor;',
+          'uniform sampler2D uSampler;',
+          'uniform float gray;',
+
+          'void main(void) {',
+          '   gl_FragColor = texture2D(uSampler, vTextureCoord);',
+          '   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0,0.0,0.0), gray);',
+          '}'
+      ];
+  };
+
+  SilhouetteFilter.prototype = Object.create( PIXI.AbstractFilter.prototype );
+  SilhouetteFilter.prototype.constructor = SilhouetteFilter;
+
+  /**
+  * The strength of the gray. 1 will make the object black, 0 will make the object its normal color.
+  * @property gray
+  * @type Number
+  */
+  Object.defineProperty(SilhouetteFilter.prototype, 'gray', {
+      get: function() {
+          return this.uniforms.gray.value;
+      },
+      set: function(value) {
+          this.uniforms.gray.value = value;
+      }
+  });
+
+  function Princess(world, o) {
+    var sprite = new PIXI.Sprite.fromFrame(o.texture);
+    sprite.anchor.x = o.anchor.x;
+    sprite.anchor.y = o.anchor.y;
+    this.sprite = sprite;
+    this.sprite.position.set(o.x, o.y);
+    this.sprite.shader = new SilhouetteFilter();
+    this.x = o.x;
+    this.y = o.y;
+    this.width = o.width;
+    this.height = o.height;
+
+    this.body = initializeBody(this, world, o);
+    var sensorDef = new Box2D.b2PolygonShape();
+    var sensorCentre = new Box2D.b2Vec2(o.width / 50 * (0.5 - o.anchor.x),
+                                        o.height / 50 * (0.5 - o.anchor.y));
+    sensorDef.SetAsBox(o.width / 100, o.height / 100, sensorCentre, 0.0);
+    var sensorFixtureDef = new Box2D.b2FixtureDef();
+    sensorFixtureDef.set_shape(sensorDef);
+    sensorFixtureDef.set_isSensor(true);
+    this.sensorFixture = this.body.CreateFixture(sensorFixtureDef);
+    this.locked = true;
+
+    this.lockSprites = [[], [], []];
+    for (var j = 0; j < 3; j++) {
+      for (var i = 0; i < 10; i++) {
+        var lockSprite = new PIXI.Sprite.fromFrame(o.lockTexture);
+        lockSprite.anchor.x = 0.5;
+        lockSprite.anchor.y = 0.5;
+        lockSprite.position.set(Math.cos(Math.PI * (i / 10)) * this.width * 0.7 + this.x,
+          this.y - (this.height / 3) * j - (this.height / 6));
+        lockSprite.blendMode = PIXI.blendModes.ADD;
+        this.lockSprites[j].push(lockSprite);
+      }
+    }
+
+    var self = this;
+    self.animate = function (dt, currentTime) {
+      if (!('lockedAnimTime' in self)) {
+        self.lockedAnimTime = currentTime;
+      }
+      var lockedTimeElapsed = currentTime - self.lockedAnimTime;
+      var calculateCirclePos = function (i) { return ((i / 10) + (lockedTimeElapsed / 2000)) % 1; };
+      var lockedAnimation = function () {
+        for (var i = 0; i < 10; i++) {
+          var circPos = calculateCirclePos(i);
+          for (var j = 0; j < 3; j++) {
+            var lockSprite = self.lockSprites[j][i];
+            lockSprite.position.set(Math.cos(Math.PI * circPos) * self.width * 0.7 + self.x,
+              self.y - (self.height / 3) * j - (self.height / 6));
+          }
+        }
+      };
+      var unlockedAnimation = function () {
+        if (!('unlockedAnimTime' in self)) {
+          self.unlockedAnimTime = currentTime;
+        }
+        var unlockedTimeElapsed = currentTime - self.unlockedAnimTime;
+        var silhouetteValue = (2000 - unlockedTimeElapsed) / 1000;
+        if (silhouetteValue <= 1) {
+          if (silhouetteValue <= 0) {
+            silhouetteValue = 0;
+          }
+          self.sprite.shader.gray = silhouetteValue;
+        }
+        var lockedTimeElapsed = currentTime - self.lockedAnimTime;
+        for (var i = 0; i < 10; i++) {
+          var circPos = calculateCirclePos(i);
+          for (var j = 0; j < 3; j++) {
+            var yDisplacement = (unlockedTimeElapsed / 300) - (2 - j);
+            if (yDisplacement < 0) yDisplacement = 0;
+            yDisplacement = Math.pow(4, yDisplacement);
+            var lockSprite = self.lockSprites[j][i];
+            lockSprite.position.set(Math.cos(Math.PI * circPos) * self.width * 0.7 + self.x,
+              self.y - (self.height / 3) * j - (self.height / 6) - yDisplacement);
+          }
+        }
+      };
+      if (self.locked) {
+        lockedAnimation();
+      } else {
+        unlockedAnimation();
+      }
+    };
+  }
+  Princess.prototype = Object.create (StaticObject.prototype);
+  Princess.prototype.constructor = StaticObstacle;
+  Princess.prototype.unlock = function () {
+    this.locked = false;
+  };
 
   function characterStaticCollision(character, staticObject) {
     var newState = character.jumpState.onFloor();
@@ -299,6 +436,12 @@ define(['pixi','box2d','multipledispatch'],
     }
   }
 
+  function characterPrincessCollision(character, princess, contact) {
+    if (princess.locked && character.hasEnoughCollectables()) {
+      princess.unlock();
+    }
+  }
+
   var handleCollision = Match(
     MatchTypes(
       instanceOf(Character), instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
@@ -323,6 +466,14 @@ define(['pixi','box2d','multipledispatch'],
     MatchTypes(
       instanceOf(Collectable), instanceOf(Character), instanceOf(Box2D.b2Contact),
       function (a, b, contact) { characterCollectableCollision(b, a, contact); }
+    ),
+    MatchTypes(
+      instanceOf(Character), instanceOf(Princess), instanceOf(Box2D.b2Contact),
+      characterPrincessCollision
+    ),
+    MatchTypes(
+      instanceOf(Princess), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterPrincessCollision(b, a, contact); }
     )
   );
 
@@ -373,6 +524,7 @@ define(['pixi','box2d','multipledispatch'],
     StaticObstacle: StaticObstacle,
     StaticPlatform: StaticPlatform,
     Collectable: Collectable,
+    Princess: Princess,
     WorldEdge: WorldEdge,
     handleCollision: handleCollision,
     handleCollisionContinuous: handleCollisionContinuous,
