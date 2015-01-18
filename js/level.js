@@ -96,10 +96,9 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       self.screenFader.addChild(fadeObject);
       self.screenFader.alpha = 0;
       // Text display
-      var text = 'Level complete\nYou found ' + level.princessName + '!';
       var textFromX = -level.globalState.screenWidth / 2;
       var textToX = level.globalState.screenWidth / 2;
-      self.completeText = new PIXI.Text(text, {
+      self.completeText = new PIXI.Text(level.levelCompletionText, {
         font: '48px Helvetica Neue, Arial, sans-serif',
         fill: 'white',
         align: 'center',
@@ -262,6 +261,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         self.physicsObjects.push(character);
         self.character = character;
         self.setInputHandlersForCharacter(globalState.inputHandler);
+        self.levelCompletionText = level.world.completionText;
         // DEBUG CODE
         globalState.inputHandler.setHandler(InputHandler.KEY_Q, function(down) {
           self.levelComplete();
@@ -291,7 +291,6 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           lockTexture: "assets/lock.png",
           width: 64,
           height: 128,
-          name: "an unnamed princess",
           anchor: { x: 0.5, y: 1 }
         }, level.princess);
         var princess = new Entities.Princess(self.world, princessOpts);
@@ -302,7 +301,6 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           });
         });
         self.animatableObjects.push(princess);
-        self.princessName = princessOpts.name;
         onLoaded();
       };
 
