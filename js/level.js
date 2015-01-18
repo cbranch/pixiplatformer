@@ -287,7 +287,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         });
         // Place princess
         var princessOpts = _.extend({
-          texture: "assets/princess1.png",
+          texture: "assets/princess.png",
           lockTexture: "assets/lock.png",
           width: 64,
           height: 128,

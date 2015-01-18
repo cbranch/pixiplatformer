@@ -3,7 +3,7 @@
     "assets/character.png",
     "assets/environment-tileset.json",
     "assets/collectable.png",
-    "assets/princess1.png",
+    "assets/ferret.png",
     "assets/lock.png"
    ],
   "world": {
@@ -397,6 +397,6 @@
   "princess": {
     "x": 3840,
     "y": 1808,
-    "name": "ferrets"
+    "texture": "assets/ferret.png"
   }
 }
