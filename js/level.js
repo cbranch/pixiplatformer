@@ -187,6 +187,16 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
             });
           }
         });
+        var pressSpaceText = new PIXI.Text("Press space to continue", {
+          font: '24px Helvetica Neue, Arial, sans-serif',
+          fill: 'white',
+          align: 'center',
+          dropShadow: true
+        });
+        pressSpaceText.anchor = new PIXI.Point(0.5, 0.5);
+        pressSpaceText.x = level.globalState.screenWidth / 2;
+        pressSpaceText.y = level.globalState.screenHeight * 0.8;
+        level.hudLayer.addChild(pressSpaceText);
       });
     }
 
