@@ -3,16 +3,16 @@
     "assets/character.png",
     "assets/environment-tileset.json",
     "assets/collectable.png",
-    "assets/jess.png",
+    "assets/baby.png",
     "assets/lock.png"
    ],
   "world": {
     "worldWidth": 4160,
     "worldHeight": 2000,
     "maxCollectables": 30,
-    "introductionText": "5 years ago...",
-    "completionText": "First came love...",
-    "nextLevel": 1
+    "introductionText": "This summer...",
+    "completionText": "Then comes a baby\nin a baby carriage!",
+    "endOfLevelUrl": "http://chrisbranch.co.uk/mylife/end.html"
   },
   "character": {
     "x": 100,
@@ -399,6 +399,6 @@
   "princess": {
     "x": 3840,
     "y": 1808,
-    "texture": "assets/jess.png"
+    "texture": "assets/baby.png"
   }
 }

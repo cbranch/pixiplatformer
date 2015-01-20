@@ -3,16 +3,16 @@
     "assets/character.png",
     "assets/environment-tileset.json",
     "assets/collectable.png",
-    "assets/jess.png",
+    "assets/ferret.png",
     "assets/lock.png"
    ],
   "world": {
     "worldWidth": 4160,
     "worldHeight": 2000,
     "maxCollectables": 30,
-    "introductionText": "5 years ago...",
-    "completionText": "First came love...",
-    "nextLevel": 1
+    "introductionText": "3 years ago...",
+    "completionText": "Then comes ferrets...\n(and later, marriage...)",
+    "nextLevel": 2
   },
   "character": {
     "x": 100,
@@ -399,6 +399,6 @@
   "princess": {
     "x": 3840,
     "y": 1808,
-    "texture": "assets/jess.png"
+    "texture": "assets/ferret.png"
   }
 }
