@@ -126,6 +126,9 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           level.globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function (down) {
             if (down) {
               level.endLevel = true;
+              level.onLevelEnded = function() {
+                level.globalState.loadLevel(LevelData[0]);
+              };
             }
           });
         }

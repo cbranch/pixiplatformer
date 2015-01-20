@@ -128,16 +128,19 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       this.paused = !this.paused;
     }
   };
+  GlobalState.prototype.loadLevel = function (level) {
+    this.currentLevel = new Level.GameLevel(this, level, this.runLevel.bind(this));
+  };
+  GlobalState.prototype.runLevel = function () {
+    gameLoop(this, this.currentLevel, this.renderer);
+  };
 
   function main() {
     var globalState = new GlobalState(document.getElementById(debugDrawId));
     var containerElement = document.getElementById(containerElementId);
     containerElement.appendChild(globalState.renderer.view);
     containerElement.appendChild(globalState.stats.domElement);
-    var levelState = new Level.GameLevel(globalState, Level.levels[0], function () {
-      // let's go
-      gameLoop(globalState, levelState, globalState.renderer);
-    });
+    globalState.loadLevel(Level.levels[0]);
   }
 
   return function () {
