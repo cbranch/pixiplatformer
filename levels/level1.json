@@ -10,7 +10,8 @@
     "worldWidth": 4160,
     "worldHeight": 2000,
     "maxCollectables": 30,
-    "completionText": "Level complete!\nYou found ferrets!",
+    "introductionText": "5 years ago...",
+    "completionText": "First came love...",
     "nextLevel": 0
   },
   "character": {

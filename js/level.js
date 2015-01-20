@@ -79,6 +79,11 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       };
     }
 
+    function easeInCubic(time, startValue, changeInValue, duration) {
+        time = time / duration;
+        return changeInValue * time * time * time + startValue;
+    }
+
     function easeOutCubic(time, startValue, changeInValue, duration) {
         time = (time / duration) - 1;
         return changeInValue * (time * time * time + 1) + startValue;
@@ -95,7 +100,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       self.pixiObject.addChild(fadeObject);
       self.pixiObject.alpha = fromAlpha;
       level.hudLayer.addChild(self.pixiObject);
-      level.animatableObjects.push(self);
+      level.addAnimatableObject(self);
       var deltaAlpha = toAlpha - fromAlpha;
 
       self.animate = function (dt, currentTime) {
@@ -114,47 +119,75 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       };
     }
 
-    function LevelCompleteScreen(level) {
+    function LevelText(level, text, duration, onFinishIn, onFinishOut) {
       var self = this;
-      new FadeTransition(level, 0, 0.7, 0.5);
-      // Text display
-      var textFromX = -level.globalState.screenWidth / 2;
-      var textToX = level.globalState.screenWidth / 2;
-      self.completeText = new PIXI.Text(level.levelCompletionText, {
+      var textInX = -level.globalState.screenWidth / 2;
+      var textMidX = level.globalState.screenWidth / 2;
+      var textOutX = level.globalState.screenWidth + textMidX;
+      self.pixiObject = new PIXI.Text(text, {
         font: '48px Helvetica Neue, Arial, sans-serif',
         fill: 'white',
         align: 'center',
         dropShadow: true
       });
-      self.completeText.anchor = new PIXI.Point(0.5, 0.5);
-      self.completeText.x = textFromX;
-      self.completeText.y = level.globalState.screenHeight / 2;
-      level.hudLayer.addChild(self.completeText);
-      level.animatableObjects.push(self);
+      self.pixiObject.anchor = new PIXI.Point(0.5, 0.5);
+      self.pixiObject.x = textInX;
+      self.pixiObject.y = level.globalState.screenHeight / 2;
+      level.hudLayer.addChild(self.pixiObject);
+      level.addAnimatableObject(self);
 
-      self.animate = function (dt, currentTime) {
+      var animateInFunction = function (dt, currentTime) {
         if (!('fromTime' in self)) {
           self.fromTime = currentTime;
         }
-        var elapsedTime = currentTime - self.fromTime;
-        // Animate in text
-        var textAnimDuration = 2000;
-        self.completeText.x = easeOutCubic(Math.min(elapsedTime, textAnimDuration),
-          textFromX, textToX - textFromX, textAnimDuration);
-
-        if (elapsedTime > 2000) {
-          level.globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function (down) {
-            if (down) {
-              new FadeTransition(level, 0, 1.0, 0.5, function () {
-                level.endLevel = true;
-                level.onLevelEnded = function() {
-                  level.globalState.loadLevel(LevelData[level.nextLevel]);
-                };
-              });
-            }
-          });
+        var elapsedTime = (currentTime - self.fromTime) / 1000;
+        self.pixiObject.x = easeOutCubic(Math.min(elapsedTime, duration),
+          textInX, textMidX - textInX, duration);
+        if (elapsedTime > duration) {
+          level.removeAnimatableObject(self);
+          if (onFinishIn) {
+            onFinishIn();
+          }
         }
       };
+      var animateOutFunction = function (dt, currentTime) {
+        if (!('fromTime' in self)) {
+          self.fromTime = currentTime;
+        }
+        var elapsedTime = (currentTime - self.fromTime) / 1000;
+        self.pixiObject.x = easeInCubic(Math.min(elapsedTime, duration),
+          textMidX, textOutX - textMidX, duration);
+        if (elapsedTime > duration) {
+          level.removeAnimatableObject(self);
+          if (onFinishOut) {
+            onFinishOut();
+          }
+        }
+      };
+
+      self.animate = animateInFunction;
+      self.animateOut = function () {
+        level.addAnimatableObject(self);
+        self.animate = animateOutFunction;
+        delete self.fromTime;
+      };
+    }
+
+    function LevelCompleteScreen(level) {
+      var self = this;
+      new FadeTransition(level, 0, 0.7, 0.5);
+      new LevelText(level, level.levelCompletionText, 2.0, function () {
+        level.globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function (down) {
+          if (down) {
+            new FadeTransition(level, 0, 1.0, 0.5, function () {
+              level.endLevel = true;
+              level.onLevelEnded = function() {
+                level.globalState.loadLevel(LevelData[level.nextLevel]);
+              };
+            });
+          }
+        });
+      });
     }
 
     function Level(globalState, o) {
@@ -167,7 +200,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       this.worldHeight = o.worldHeight;
       this.character = null;
       this.animatableObjects = [];
-      this.animatableObjectsToRemove = [];
+      this.animatableObjectsQueue = [];
       this.physicsObjects = [];
       this.backgroundLayer = null;
       this.foregroundLayer = null;
@@ -222,15 +255,24 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       this.pauseLayer.visible = false;
       stage.addChild(this.pauseLayer);
     }
-    Level.prototype.removeAnimatableObject = function (o) {
-      this.animatableObjectsToRemove.push(o);
+    Level.prototype.addAnimatableObject = function (o) {
+      this.animatableObjectsQueue.push({ add: true, object: o });
     };
-    Level.prototype.purgeRemovedAnimatableObjects = function () {
+    Level.prototype.removeAnimatableObject = function (o) {
+      this.animatableObjectsQueue.push({ add: false, object: o });
+    };
+    Level.prototype.updateAnimatableObjectList = function () {
       var self = this;
-      this.animatableObjectsToRemove.forEach(function (o) {
-        var i = self.animatableObjects.indexOf(o);
+      this.animatableObjectsQueue.forEach(function (o) {
+        var i = self.animatableObjects.indexOf(o.object);
         if (i != -1) {
-          self.animatableObjects.splice(i, 1);
+          if (!o.add) {
+            self.animatableObjects.splice(i, 1);
+          }
+        } else {
+          if (o.add) {
+            self.animatableObjects.push(o.object);
+          }
         }
       });
     };
@@ -328,6 +370,11 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         self.animatableObjects.push(princess);
         var fadeIn = new FadeTransition(self, 1.0, 0.0, 0.3, function () {
           self.hudLayer.removeChild(fadeIn.pixiObject);
+          var introText = new LevelText(self, level.world.introductionText, 2.0, function () {
+            introText.animateOut();
+          }, function () {
+            self.hudLayer.removeChild(introText.pixiObject);
+          });
         });
         onLoaded();
       };

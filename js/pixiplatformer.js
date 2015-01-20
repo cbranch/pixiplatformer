@@ -31,7 +31,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     }
     function updateDisplay(currentTime, dt) {
       levelState.animatableObjects.map(function(x) { x.animate(dt, currentTime, levelState); });
-      levelState.purgeRemovedAnimatableObjects();
+      levelState.updateAnimatableObjectList();
       updateScrolling();
       globalState.debugGraphics.clear();
       if (globalState.debugDraw.enable) {
