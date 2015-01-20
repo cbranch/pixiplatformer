@@ -10,7 +10,8 @@
     "worldWidth": 4160,
     "worldHeight": 2000,
     "maxCollectables": 30,
-    "completionText": "Level complete!\nYou found ferrets!"
+    "completionText": "Level complete!\nYou found ferrets!",
+    "nextLevel": 0
   },
   "character": {
     "x": 100,

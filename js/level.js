@@ -84,17 +84,39 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         return changeInValue * (time * time * time + 1) + startValue;
     }
 
-    function LevelCompleteScreen(level) {
+    function FadeTransition(level, fromAlpha, toAlpha, duration, onFinish) {
       var self = this;
       // Screen fade out
-      self.screenFader = new PIXI.DisplayObjectContainer();
-      level.hudLayer.addChild(self.screenFader);
+      self.pixiObject = new PIXI.DisplayObjectContainer();
       var fadeObject = new PIXI.Graphics();
       fadeObject.beginFill(0);
       fadeObject.drawRect(0, 0, level.globalState.screenWidth, level.globalState.screenHeight);
       fadeObject.endFill();
-      self.screenFader.addChild(fadeObject);
-      self.screenFader.alpha = 0;
+      self.pixiObject.addChild(fadeObject);
+      self.pixiObject.alpha = fromAlpha;
+      level.hudLayer.addChild(self.pixiObject);
+      level.animatableObjects.push(self);
+      var deltaAlpha = toAlpha - fromAlpha;
+
+      self.animate = function (dt, currentTime) {
+        if (!('fromTime' in self)) {
+          self.fromTime = currentTime;
+        }
+        var elapsedTime = Math.min((currentTime - self.fromTime) / 1000, duration);
+        var currentPosition = (elapsedTime / duration) * deltaAlpha + fromAlpha;
+        self.pixiObject.alpha = currentPosition;
+        if (elapsedTime >= duration) {
+          level.removeAnimatableObject(self);
+          if (onFinish) {
+            onFinish();
+          }
+        }
+      };
+    }
+
+    function LevelCompleteScreen(level) {
+      var self = this;
+      new FadeTransition(level, 0, 0.7, 0.5);
       // Text display
       var textFromX = -level.globalState.screenWidth / 2;
       var textToX = level.globalState.screenWidth / 2;
@@ -108,15 +130,13 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       self.completeText.x = textFromX;
       self.completeText.y = level.globalState.screenHeight / 2;
       level.hudLayer.addChild(self.completeText);
+      level.animatableObjects.push(self);
 
       self.animate = function (dt, currentTime) {
         if (!('fromTime' in self)) {
           self.fromTime = currentTime;
         }
         var elapsedTime = currentTime - self.fromTime;
-        // Animate screen fade out
-        var newAlpha = Math.min(elapsedTime / 1000, 0.7);
-        self.screenFader.alpha = newAlpha;
         // Animate in text
         var textAnimDuration = 2000;
         self.completeText.x = easeOutCubic(Math.min(elapsedTime, textAnimDuration),
@@ -125,10 +145,12 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         if (elapsedTime > 2000) {
           level.globalState.inputHandler.setHandler(InputHandler.KEY_SPACE, function (down) {
             if (down) {
-              level.endLevel = true;
-              level.onLevelEnded = function() {
-                level.globalState.loadLevel(LevelData[0]);
-              };
+              new FadeTransition(level, 0, 1.0, 0.5, function () {
+                level.endLevel = true;
+                level.onLevelEnded = function() {
+                  level.globalState.loadLevel(LevelData[level.nextLevel]);
+                };
+              });
             }
           });
         }
@@ -217,7 +239,6 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         this.isLevelComplete = true;
         var levelCompleteScreen = new LevelCompleteScreen(this);
         this.unbindInputHandlersForCharacter(this.globalState.inputHandler);
-        this.animatableObjects.push(levelCompleteScreen);
       }
     };
     Level.prototype.setInputHandlersForCharacter = function (inputHandler) {
@@ -258,6 +279,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
     module.GameLevel = function(globalState, level, onLoaded) {
       var self = this;
       var setupLevel = function () {
+        self.nextLevel = level.world.nextLevel;
         var character = new Entities.Character(self.world, level.character, level.world.maxCollectables);
         self.foregroundLayer.addChild(character.sprite);
         self.animatableObjects.push(character);
@@ -304,6 +326,9 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
           });
         });
         self.animatableObjects.push(princess);
+        var fadeIn = new FadeTransition(self, 1.0, 0.0, 0.3, function () {
+          self.hudLayer.removeChild(fadeIn.pixiObject);
+        });
         onLoaded();
       };
 
