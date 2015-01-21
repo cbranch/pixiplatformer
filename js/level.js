@@ -187,7 +187,11 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
             new FadeTransition(level, 0, 1.0, 0.5, function () {
               level.endLevel = true;
               level.onLevelEnded = function() {
-                level.globalState.loadLevel(LevelData[level.nextLevel]);
+                if ('nextLevel' in level) {
+                  level.globalState.loadLevel(LevelData[level.nextLevel]);
+                } else if ('endOfLevelUrl' in level) {
+                  window.location.assign(level.endOfLevelUrl);
+                }
               };
             });
           }
@@ -337,6 +341,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
       var self = this;
       var setupLevel = function () {
         self.nextLevel = level.world.nextLevel;
+        self.endOfLevelUrl = level.world.endOfLevelUrl;
         var character = new Entities.Character(self.world, level.character, level.world.maxCollectables);
         self.foregroundLayer.addChild(character.sprite);
         self.animatableObjects.push(character);
