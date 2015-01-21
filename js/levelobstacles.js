@@ -34,6 +34,20 @@ define(['underscore','entities'],
       height: 64,
       anchor: { x: 0, y: 0 }
     };
+    obstacleTypes["dirt-slope-under-up"] = {
+      jsType: Entities.StaticObject,
+      texture: "dirt-slope-under-up",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    obstacleTypes["dirt-slope-under-down"] = {
+      jsType: Entities.StaticObject,
+      texture: "dirt-slope-under-down",
+      width: 128,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
     var groundBase = {
       texture: "ground-m",
       height: 64,
@@ -57,6 +71,22 @@ define(['underscore','entities'],
     };
     obstacleTypes["ground-r"] = _.extend({ jsType: Entities.StaticObstacle }, groundRBase);
     obstacleTypes["platform-r"] = _.extend({ jsType: Entities.StaticPlatform }, groundRBase);
+    var groundEdgeLBase = {
+      texture: "ground-edge-l",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    obstacleTypes["ground-edge-l"] = _.extend({ jsType: Entities.StaticObstacle }, groundEdgeLBase);
+    obstacleTypes["platform-edge-l"] = _.extend({ jsType: Entities.StaticPlatform }, groundEdgeLBase);
+    var groundEdgeRBase = {
+      texture: "ground-edge-r",
+      width: 64,
+      height: 64,
+      anchor: { x: 0, y: 0 }
+    };
+    obstacleTypes["ground-edge-r"] = _.extend({ jsType: Entities.StaticObstacle }, groundEdgeRBase);
+    obstacleTypes["platform-edge-r"] = _.extend({ jsType: Entities.StaticPlatform }, groundEdgeRBase);
     var groundSlopeUpBase = {
       texture: "ground-slope-up",
       width: 128,

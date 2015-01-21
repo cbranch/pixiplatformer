@@ -132,6 +132,20 @@
       "trimmed": false,
       "frame": {"x":320,"y":192,"w":128,"h":64},
       "sourceSize": {"w":128,"h":64}
+    },
+    "ground-edge-l": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":192,"y":320,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
+    },
+    "ground-edge-r": {
+      "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+      "rotated": false,
+      "trimmed": false,
+      "frame": {"x":384,"y":320,"w":64,"h":64},
+      "sourceSize": {"w":64,"h":64}
     }
   },
   "meta": {
