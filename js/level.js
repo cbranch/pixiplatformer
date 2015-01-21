@@ -40,12 +40,17 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
     }
 
     function defineWorldEdge(world, x1, y1, x2, y2) {
+      var xWidth = x2 - x1;
+      var yWidth = y2 - y1;
+      var xMid = xWidth / 2 + x1;
+      var yMid = yWidth / 2 + y1;
       var bodyDef = new Box2D.b2BodyDef();
-      bodyDef.set_position(new Box2D.b2Vec2((x2 - x1) / 2, (y2 - y1) / 2));
+      bodyDef.set_position(new Box2D.b2Vec2(xMid, yMid));
       var body = world.CreateBody(bodyDef);
       body.userData = new Entities.WorldEdge();
       var worldEdgeDef = new Box2D.b2EdgeShape();
-      worldEdgeDef.Set(new Box2D.b2Vec2(x1, y1), new Box2D.b2Vec2(x2, y2));
+      worldEdgeDef.Set(new Box2D.b2Vec2(xWidth * -0.5, yWidth * -0.5),
+                       new Box2D.b2Vec2(xWidth * 0.5, yWidth * 0.5));
       body.CreateFixture(worldEdgeDef, 1.0);
     }
 
