@@ -187,9 +187,9 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
             new FadeTransition(level, 0, 1.0, 0.5, function () {
               level.endLevel = true;
               level.onLevelEnded = function() {
-                if ('nextLevel' in level) {
+                if (level.nextLevel !== undefined) {
                   level.globalState.loadLevel(LevelData[level.nextLevel]);
-                } else if ('endOfLevelUrl' in level) {
+                } else if (level.endOfLevelUrl !== undefined) {
                   window.location.assign(level.endOfLevelUrl);
                 }
               };
