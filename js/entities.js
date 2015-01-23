@@ -112,7 +112,6 @@ define(['pixi','box2d','multipledispatch'],
     var horizontalMovement = 4.0;
     var horizontalMaxMovementThisFrame = 0.05 * dt;
     if (this.jumpState.restrictMovement ()) {
-      horizontalMaxMovementThisFrame /= 10.0;
     }
     var horizontalChange = 0.0;
     if (this.movingLeft) {
@@ -481,14 +480,35 @@ define(['pixi','box2d','multipledispatch'],
     )
   );
 
+  function adhereCharacterWhenMoving(character, contact) {
+    if (character.movingLeft || character.movingRight) {
+      contact.SetFriction(0.3);
+    } else {
+      contact.SetFriction(2.0);
+    }
+  }
+
   function characterPlatformCollisionContinuous(character, platform, contact) {
     if (character.movingDown) {
       platform.supportPlayer = false;
       contact.disableThisStep = true;
     }
+    adhereCharacterWhenMoving(character, contact);
+  }
+
+  function characterObstacleCollisionContinuous(character, obstacle, contact) {
+    adhereCharacterWhenMoving(character, contact);
   }
 
   var handleCollisionContinuous = Match(
+    MatchTypes(
+      instanceOf(Character), instanceOf(StaticObstacle), instanceOf(Box2D.b2Contact),
+      characterObstacleCollisionContinuous
+    ),
+    MatchTypes(
+      instanceOf(StaticObstacle), instanceOf(Character), instanceOf(Box2D.b2Contact),
+      function (a, b, contact) { characterObstacleCollisionContinuous(b, a, contact); }
+    ),
     MatchTypes(
       instanceOf(Character), instanceOf(StaticPlatform), instanceOf(Box2D.b2Contact),
       characterPlatformCollisionContinuous
