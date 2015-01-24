@@ -347,6 +347,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         self.animatableObjects.push(character);
         self.physicsObjects.push(character);
         self.character = character;
+        self.characterOpts = level.character;
         self.setInputHandlersForCharacter(globalState.inputHandler);
         self.levelCompletionText = level.world.completionText;
         // DEBUG CODE

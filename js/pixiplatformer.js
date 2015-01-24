@@ -19,6 +19,10 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
       levelState.physicsObjects.map(function(x) {
         x.physics(dt);
       });
+      if (levelState.character.body.GetPosition().get_y() > levelState.worldHeight / 100) {
+        levelState.character.body.SetTransform(
+          new Box2D.b2Vec2(levelState.characterOpts.x / 100, levelState.characterOpts.y / 100), 0);
+      }
     }
     function updateScrolling() {
       var characterPos = levelState.character.body.GetPosition();
