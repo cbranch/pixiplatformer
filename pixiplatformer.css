@@ -22,3 +22,47 @@ body {
   padding: 8px;
   background-color: #000000;
 }
+#logo {
+  margin: 10px auto;
+  width: 435px;
+  height: 360px;
+}
+.two-column {
+  width: 930px;
+  height: 260px;
+  margin: 0 auto;
+}
+.first-column {
+  float: left;
+}
+.second-column {
+  float: right;
+}
+.text-box {
+  background-color: #241f10;
+  border: 1px solid #41391d;
+  width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.introduction, .announcement {
+  font-weight: bold;
+  font-size: larger;
+}
+.play-game {
+  background-color: #41391d;
+  border: 1px solid #695c2f;
+  display: block;
+  width: 300px;
+  margin: 60px auto;
+  height: 140px;
+  text-decoration: none;
+  text-align: center;
+  color: white;
+  font-size: 36px;
+}
+.play-game span {
+  display: block;
+  position: relative;
+  top: 48px;
+}

@@ -41,7 +41,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     }
     var pauseMessageShown = false;
     function tick(currentTimestamp) {
-      stats.begin();
+      if (stats !== undefined) { stats.begin(); }
       var suspendedLoop = false;
       if (!globalState.paused) {
         inputHandler.processInput();
@@ -64,7 +64,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
           requestAnimationFrame(captureFirstTimestamp);
         };
       }
-      stats.end();
+      if (stats !== undefined) { stats.end(); }
       if (!levelState.endLevel && !suspendedLoop) {
         requestAnimationFrame(tick);
       } else {
@@ -105,11 +105,12 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
 
   function GlobalState(debugDrawElement) {
     this.renderer = PIXI.autoDetectRenderer(viewportWidth, viewportHeight);
-    this.stats = initStats();
+    //this.stats = initStats();
     this.inputHandler = new InputHandler();
     this.inputHandler.setupInput();
     this.debugGraphics = new PIXI.Graphics();
-    this.debugDraw = createDebugDraw(this.debugGraphics, debugDrawElement);
+    //this.debugDraw = createDebugDraw(this.debugGraphics, debugDrawElement);
+    this.debugDraw = { enable: false };
     this.screenWidth = 1000;
     this.screenHeight = 600;
     this.backgroundColor = backgroundColor;
@@ -139,7 +140,7 @@ define(['pixi','box2d','stats','debugdraw','inputhandler','level'],
     var globalState = new GlobalState(document.getElementById(debugDrawId));
     var containerElement = document.getElementById(containerElementId);
     containerElement.appendChild(globalState.renderer.view);
-    containerElement.appendChild(globalState.stats.domElement);
+    //containerElement.appendChild(globalState.stats.domElement);
     globalState.loadLevel(Level.levels[0]);
   }
 

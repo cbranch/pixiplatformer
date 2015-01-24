@@ -117,10 +117,12 @@ define(['pixi','box2d','multipledispatch'],
     var horizontalChange = 0.0;
     if (this.movingLeft) {
       if (!this.movingRight) {
+        this.sprite.scale.x = -1;
         horizontalChange = -horizontalMovement - currentVelocity.get_x();
         horizontalChange = Math.min(0, Math.max(-horizontalMaxMovementThisFrame, horizontalChange));
       }
     } else if (this.movingRight) {
+      this.sprite.scale.x = 1;
       horizontalChange = horizontalMovement - currentVelocity.get_x();
       horizontalChange = Math.min(horizontalMaxMovementThisFrame, Math.max(0, horizontalChange));
     }
