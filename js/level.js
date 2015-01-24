@@ -133,7 +133,7 @@ define(['underscore','pixi','box2d','entities','inputhandler','levelobstacles','
         font: '48px Helvetica Neue, Arial, sans-serif',
         fill: 'white',
         align: 'center',
-        dropShadow: true
+        strokeThickness: 4
       });
       self.pixiObject.anchor = new PIXI.Point(0.5, 0.5);
       self.pixiObject.x = textInX;
