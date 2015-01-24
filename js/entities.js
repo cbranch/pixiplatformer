@@ -100,6 +100,7 @@ define(['pixi','box2d','multipledispatch'],
     this.movingLeft = false;
     this.movingRight = false;
     this.movingDown = false;
+    this.movingDisabled = false;
     this.collectables = 0;
     this.maxCollectables = maxCollectables;
   }
@@ -140,16 +141,22 @@ define(['pixi','box2d','multipledispatch'],
     }
   };
   Character.prototype.moveLeft = function(down) {
-    this.movingLeft = down;
+    this.movingLeft = down && !this.movingDisabled;
   };
   Character.prototype.moveRight = function(down) {
-    this.movingRight = down;
+    this.movingRight = down && !this.movingDisabled;
   };
   Character.prototype.moveDown = function(down) {
-    this.movingDown = down;
+    this.movingDown = down && !this.movingDisabled;
   };
   Character.prototype.hasEnoughCollectables = function() {
     return this.collectables >= this.maxCollectables;
+  };
+  Character.prototype.stopMovement = function() {
+    this.movingDisabled = true;
+    this.movingLeft = false;
+    this.movingRight = false;
+    this.movingDown = false;
   };
 
   function StaticObject(world, o) {
@@ -321,7 +328,7 @@ define(['pixi','box2d','multipledispatch'],
     var sensorDef = new Box2D.b2PolygonShape();
     var sensorCentre = new Box2D.b2Vec2(o.width / 50 * (0.5 - o.anchor.x),
                                         o.height / 50 * (0.5 - o.anchor.y));
-    sensorDef.SetAsBox(o.width / 100, o.height / 100, sensorCentre, 0.0);
+    sensorDef.SetAsBox(o.width / 50, o.height / 50, sensorCentre, 0.0);
     var sensorFixtureDef = new Box2D.b2FixtureDef();
     sensorFixtureDef.set_shape(sensorDef);
     sensorFixtureDef.set_isSensor(true);
@@ -442,6 +449,7 @@ define(['pixi','box2d','multipledispatch'],
   function characterPrincessCollision(character, princess, contact) {
     if (princess.locked && character.hasEnoughCollectables()) {
       princess.unlock();
+      character.stopMovement();
     }
   }
 
