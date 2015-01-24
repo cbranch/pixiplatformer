@@ -393,6 +393,12 @@
     {
       "x": 1088,
       "y": 1088,
+      "width": 64,
+      "type": "platform"
+    },
+    {
+      "x": 1152,
+      "y": 1088,
       "type": "platform-edge-r"
     },
     {
@@ -403,6 +409,12 @@
     {
       "x": 1216,
       "y": 960,
+      "width": 64,
+      "type": "platform"
+    },
+    {
+      "x": 1280,
+      "y": 960,
       "type": "platform-edge-r"
     },
     {
@@ -412,6 +424,12 @@
     },
     {
       "x": 1408,
+      "y": 832,
+      "width": 64,
+      "type": "platform"
+    },
+    {
+      "x": 1472,
       "y": 832,
       "type": "platform-edge-r"
     },
@@ -701,7 +719,7 @@
     }
   ],
   "princess": {
-    "x": 256,
+    "x": 512,
     "y": 448,
     "texture": "assets/ferret.png"
   }
